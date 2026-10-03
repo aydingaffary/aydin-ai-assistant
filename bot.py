@@ -34,7 +34,19 @@ def get_main_keyboard() -> ReplyKeyboardMarkup:
 def get_feature_mode(text: str) -> str | None:
     """Return the internal mode for a menu option."""
 
-    
+    features = {
+        "🧠 دستیار هوشمند": "smart_assistant",
+        "💵 ارز و طلا": "currency",
+        "📰 اخبار": "news",
+        "⚽ نتایج فوتبال": "football",
+        "🎬 فیلم و سریال": "movies",
+        "⛅ آب‌وهوا": "weather",
+        "🍳 آشپزی": "cooking",
+        "🧩 چالش روزانه": "challenge",
+        "⏰ یادآورها": "reminder",
+        "✍️ ابزارهای AI": "ai_tools",
+        "📩 ارتباط با سازنده": "contact",
+    }
 
     return features.get(text)
 
@@ -145,7 +157,7 @@ async def handle_message(
         ),
     }
 
-        mode = get_feature_mode(text)
+    mode = get_feature_mode(text)
 
     if mode:
         context.user_data["mode"] = mode
@@ -156,7 +168,7 @@ async def handle_message(
         )
         return
 
-        mode = context.user_data.get("mode")
+    mode = context.user_data.get("mode")
 
     if mode:
         response = get_feature_response(mode)
@@ -187,7 +199,13 @@ async def cancel(
         "❌ عملیات لغو شد.\n\n"
         "برای شروع یک قابلیت، یکی از گزینه‌های منو را انتخاب کنید."
     )
+async def error_handler(
+    update: object,
+    context: ContextTypes.DEFAULT_TYPE,
+) -> None:
+    """Handle unexpected errors raised by the bot."""
 
+    print(f"Bot error: {context.error}")
 
 def main() -> None:
     """Start the Telegram bot."""
@@ -206,7 +224,7 @@ def main() -> None:
             handle_message,
         )
     )
-
+    application.add_error_handler(error_handler)
     print("Aydin AI Assistant is running...")
 
     application.run_polling()
