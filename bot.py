@@ -1,6 +1,9 @@
 import os
-
+from services.limits import UserLimitManager
 from dotenv import load_dotenv
+from ai_router import AIRouter
+from services.limits import UserLimitManager
+from services.user_service import UserService
 from telegram import ReplyKeyboardMarkup, Update
 from telegram.ext import (
     ApplicationBuilder,
@@ -9,9 +12,13 @@ from telegram.ext import (
     MessageHandler,
     filters,
 )
+
 load_dotenv()
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
+ai_router = AIRouter()
+limit_manager = UserLimitManager()
+user_service = UserService()
 
 def get_main_keyboard() -> ReplyKeyboardMarkup:
     """Return the main menu keyboard."""
@@ -30,6 +37,7 @@ def get_main_keyboard() -> ReplyKeyboardMarkup:
         keyboard,
         resize_keyboard=True,
     )
+
 
 def get_feature_mode(text: str) -> str | None:
     """Return the internal mode for a menu option."""
@@ -50,12 +58,11 @@ def get_feature_mode(text: str) -> str | None:
 
     return features.get(text)
 
+
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle the /start command."""
 
     context.user_data.pop("mode", None)
-
- 
 
     message = (
         "سلام 👋\n\n"
@@ -72,6 +79,8 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         message,
         reply_markup=reply_markup,
     )
+
+
 def get_feature_response(mode: str) -> str:
     """Return a temporary response for the selected feature."""
 
@@ -94,6 +103,7 @@ def get_feature_response(mode: str) -> str:
         "این قابلیت هنوز پیاده‌سازی نشده است.",
     )
 
+
 async def handle_message(
     update: Update,
     context: ContextTypes.DEFAULT_TYPE,
@@ -101,6 +111,10 @@ async def handle_message(
     """Handle menu selections and user input."""
 
     text = update.message.text
+    user = user_service.get_or_create_user(
+    user_id=update.effective_user.id,
+    username=update.effective_user.username,
+)
     if text == "↩️ منوی اصلی":
         context.user_data.pop("mode", None)
 
@@ -110,52 +124,7 @@ async def handle_message(
         )
         return
 
-        features = {
-        "🧠 دستیار هوشمند": (
-            "smart_assistant",
-            "سؤال یا درخواست خود را بنویسید.",
-        ),
-        "💵 ارز و طلا": (
-            "currency",
-            "نوع ارز یا قیمت موردنظر خود را بنویسید.",
-        ),
-        "📰 اخبار": (
-            "news",
-            "موضوع خبری موردنظر خود را بنویسید.",
-        ),
-        "⚽ نتایج فوتبال": (
-            "football",
-            "نام لیگ یا تیم موردنظر را بنویسید.",
-        ),
-        "🎬 فیلم و سریال": (
-            "movies",
-            "نام فیلم، سریال یا موضوع موردنظر را بنویسید.",
-        ),
-        "⛅ آب‌وهوا": (
-            "weather",
-            "نام شهر موردنظر را بنویسید.",
-        ),
-        "🍳 آشپزی": (
-            "cooking",
-            "نام غذا یا مواد اولیه را بنویسید.",
-        ),
-        "🧩 چالش روزانه": (
-            "challenge",
-            "برای دریافت چالش روزانه آماده‌اید؟",
-        ),
-        "⏰ یادآورها": (
-            "reminder",
-            "یادآوری موردنظر خود را بنویسید.",
-        ),
-        "✍️ ابزارهای AI": (
-            "ai_tools",
-            "نوع ابزار موردنظر را انتخاب یا درخواست خود را بنویسید.",
-        ),
-        "📩 ارتباط با سازنده": (
-            "contact",
-            "پیام خود را برای سازنده ربات بنویسید.",
-        ),
-    }
+        
 
     mode = get_feature_mode(text)
 
@@ -163,29 +132,39 @@ async def handle_message(
         context.user_data["mode"] = mode
 
         await update.message.reply_text(
-            "✅ قابلیت انتخاب شد.\n\n"
-            "لطفاً درخواست خود را ارسال کنید."
+            "✅ قابلیت انتخاب شد.\n\n" "لطفاً درخواست خود را ارسال کنید."
         )
         return
 
     mode = context.user_data.get("mode")
 
-    if mode:
-        response = get_feature_response(mode)
+    if mode == "smart_assistant":
+        user_id = update.effective_user.id
 
+    if not limit_manager.can_use_ai(user_id):
         await update.message.reply_text(
-            response
-            + "\n\n"
-            + "📌 درخواست شما دریافت شد.\n"
-            + "موتور اصلی این قابلیت هنوز متصل نشده است."
+            "⛔ سهمیه رایگان امروز شما تمام شده است."
         )
-
-        context.user_data.pop("mode", None)
         return
 
+    response = ai_router.ask_gemini(text)
+
+    limit_manager.record_request(user_id)
+
+    await update.message.reply_text(response)
+    remaining = limit_manager.remaining_requests(user_id)
+
     await update.message.reply_text(
-        "لطفاً ابتدا یکی از گزینه‌های منو را انتخاب کنید."
-    )
+    response
+    + "\n\n"
+    + f"📊 درخواست رایگان باقی‌مانده امروز: {remaining}"
+)
+
+    context.user_data.pop("mode", None)
+    return
+
+    await update.message.reply_text("لطفاً ابتدا یکی از گزینه‌های منو را انتخاب کنید.")
+
 
 async def cancel(
     update: Update,
@@ -199,6 +178,8 @@ async def cancel(
         "❌ عملیات لغو شد.\n\n"
         "برای شروع یک قابلیت، یکی از گزینه‌های منو را انتخاب کنید."
     )
+
+
 async def error_handler(
     update: object,
     context: ContextTypes.DEFAULT_TYPE,
@@ -206,6 +187,7 @@ async def error_handler(
     """Handle unexpected errors raised by the bot."""
 
     print(f"Bot error: {context.error}")
+
 
 def main() -> None:
     """Start the Telegram bot."""
