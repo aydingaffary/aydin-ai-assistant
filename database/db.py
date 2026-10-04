@@ -1,6 +1,5 @@
 import sqlite3
 
-
 DATABASE_NAME = "aydin_ai.db"
 
 
@@ -16,19 +15,16 @@ def init_database():
     connection = get_connection()
     cursor = connection.cursor()
 
-    cursor.execute(
-        """
+    cursor.execute("""
         CREATE TABLE IF NOT EXISTS users (
             user_id INTEGER PRIMARY KEY,
             username TEXT,
             is_premium INTEGER DEFAULT 0,
             created_at TEXT
         )
-        """
-    )
+        """)
 
-    cursor.execute(
-        """
+    cursor.execute("""
         CREATE TABLE IF NOT EXISTS messages (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id INTEGER NOT NULL,
@@ -37,8 +33,7 @@ def init_database():
             created_at TEXT NOT NULL,
             FOREIGN KEY(user_id) REFERENCES users(user_id)
         )
-        """
-    )
+        """)
 
     connection.commit()
     connection.close()

@@ -1,5 +1,5 @@
 import os
-
+from services.weather_service import WeatherService
 from services.ai_service import AIService
 from database.db import init_database
 from services.limits import UserLimitManager
@@ -23,6 +23,8 @@ ai_router = AIRouter()
 limit_manager = UserLimitManager()
 user_service = UserService()
 ai_service = AIService()
+weather_service = WeatherService()
+
 
 def get_main_keyboard() -> ReplyKeyboardMarkup:
     """Return the main menu keyboard."""
@@ -122,9 +124,9 @@ async def handle_message(
 
     text = update.message.text
     user = user_service.get_or_create_user(
-    user_id=update.effective_user.id,
-    username=update.effective_user.username,
-)
+        user_id=update.effective_user.id,
+        username=update.effective_user.username,
+    )
     if text == "↩️ منوی اصلی":
         context.user_data.pop("mode", None)
 
@@ -134,29 +136,37 @@ async def handle_message(
         )
         return
 
-        
-
     mode = get_feature_mode(text)
 
     if mode:
         context.user_data["mode"] = mode
 
-        await update.message.reply_text(
-            "✅ قابلیت انتخاب شد.\n\n" "لطفاً درخواست خود را ارسال کنید."
-        )
+        if mode == "weather":
+            await update.message.reply_text("⛅ لطفاً نام شهر خود را وارد کنید.")
+        elif mode == "smart_assistant":
+            await update.message.reply_text("🧠 لطفاً درخواست خود را ارسال کنید.")
+        else:
+            await update.message.reply_text("✅ قابلیت انتخاب شد.")
+
         return
 
     mode = context.user_data.get("mode")
 
     print("DEBUG MODE:", mode)
     user_id = update.effective_user.id
+    if mode == "weather":
+
+        response = weather_service.get_weather(text)
+
+        await update.message.reply_text(response)
+
+        context.user_data.pop("mode", None)
+        return
 
     if mode == "smart_assistant":
 
         if not limit_manager.can_use_ai(user_id):
-            await update.message.reply_text(
-                "⛔ سهمیه رایگان امروز شما تمام شده است."
-            )
+            await update.message.reply_text("⛔ سهمیه رایگان امروز شما تمام شده است.")
             return
 
         response = ai_service.ask(
@@ -169,14 +179,11 @@ async def handle_message(
         remaining = limit_manager.remaining_requests(user_id)
 
         await update.message.reply_text(
-            response
-            + "\n\n"
-            + f"📊 درخواست رایگان باقی‌مانده امروز: {remaining}"
+            response + "\n\n" + f"📊 درخواست رایگان باقی‌مانده امروز: {remaining}"
         )
 
         context.user_data.pop("mode", None)
         return
-
 
 
 async def cancel(

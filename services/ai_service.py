@@ -24,18 +24,10 @@ class AIService:
 
         history = self.message_service.get_messages(user_id)
 
-        context = "\n".join(
-            [
-                f"{role}: {content}"
-                for role, content, _ in history
-            ]
-        )
+        context = "\n".join([f"{role}: {content}" for role, content, _ in history])
 
         final_prompt = (
-            "Conversation history:\n"
-            f"{context}\n\n"
-            "User question:\n"
-            f"{prompt}"
+            "Conversation history:\n" f"{context}\n\n" "User question:\n" f"{prompt}"
         )
 
         response = self.ai_router.ask_gemini(final_prompt)
