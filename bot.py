@@ -1,11 +1,11 @@
 import os
-from services.weather_service import WeatherService
+
 from services.ai_service import AIService
 from database.db import init_database
 from services.limits import UserLimitManager
 from dotenv import load_dotenv
-from ai_router import AIRouter
-from services.limits import UserLimitManager
+from handlers.weather_handler import handle_weather
+
 from services.user_service import UserService
 from telegram import ReplyKeyboardMarkup, Update
 from telegram.ext import (
@@ -19,11 +19,11 @@ from telegram.ext import (
 load_dotenv()
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
-ai_router = AIRouter()
+
 limit_manager = UserLimitManager()
 user_service = UserService()
 ai_service = AIService()
-weather_service = WeatherService()
+
 
 
 def get_main_keyboard() -> ReplyKeyboardMarkup:
@@ -123,7 +123,7 @@ async def handle_message(
     """Handle menu selections and user input."""
 
     text = update.message.text
-    user = user_service.get_or_create_user(
+    user_service.get_or_create_user(
         user_id=update.effective_user.id,
         username=update.effective_user.username,
     )
@@ -152,15 +152,9 @@ async def handle_message(
 
     mode = context.user_data.get("mode")
 
-    print("DEBUG MODE:", mode)
     user_id = update.effective_user.id
     if mode == "weather":
-
-        response = weather_service.get_weather(text)
-
-        await update.message.reply_text(response)
-
-        context.user_data.pop("mode", None)
+        await handle_weather(update, context)
         return
 
     if mode == "smart_assistant":
@@ -210,8 +204,9 @@ async def error_handler(
 
 
 def main() -> None:
-    init_database()
     """Start the Telegram bot."""
+
+    init_database()
 
     if not BOT_TOKEN:
         raise ValueError("BOT_TOKEN is not set.")
