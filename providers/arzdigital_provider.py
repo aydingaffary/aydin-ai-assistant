@@ -2,9 +2,9 @@
 
 import json
 import re
+from concurrent.futures import ThreadPoolExecutor
 
 import requests
-
 
 class ArzDigitalProvider:
     """Get market prices from ArzDigital."""
@@ -13,10 +13,13 @@ class ArzDigitalProvider:
         "User-Agent": "Mozilla/5.0",
     }
 
+    def __init__(self):
+        self.session = requests.Session()
+
     def get_page_json_description(self, url: str) -> str | None:
         """Extract JSON-LD description from page."""
 
-        response = requests.get(
+        response = self.session.get(
             url,
             headers=self.HEADERS,
             timeout=10,
@@ -62,18 +65,18 @@ class ArzDigitalProvider:
     def get_market_data(self) -> dict:
         """Return main market prices."""
 
-        return {
-            "dollar": self.get_exchange_price(
-                "https://arzdigital.com/currencies/united-states-dollar/"
-            ),
-            "euro": self.get_exchange_price("https://arzdigital.com/currencies/euro/"),
-            "gold18": self.get_exchange_price(
-                "https://arzdigital.com/gold/gold-gerami-18/"
-            ),
-            "gold_ounce": self.get_exchange_price(
-                "https://arzdigital.com/gold/gold-ounce/"
-            ),
-            "emami_coin": self.get_exchange_price(
-                "https://arzdigital.com/gold-coins/emami-gold/"
-            ),
+        urls = {
+            "dollar": "https://arzdigital.com/currencies/united-states-dollar/",
+            "euro": "https://arzdigital.com/currencies/euro/",
+            "gold18": "https://arzdigital.com/gold/gold-gerami-18/",
+            "gold_ounce": "https://arzdigital.com/gold/gold-ounce/",
+            "emami_coin": "https://arzdigital.com/gold-coins/emami-gold/",
         }
+
+        with ThreadPoolExecutor(max_workers=5) as executor:
+            results = executor.map(
+            self.get_exchange_price,
+            urls.values(),
+        )
+
+        return dict(zip(urls.keys(), results))

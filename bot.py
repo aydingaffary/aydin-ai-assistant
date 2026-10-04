@@ -4,6 +4,9 @@ from services.ai_service import AIService
 from database.db import init_database
 from services.limits import UserLimitManager
 from dotenv import load_dotenv
+from handlers.router import register_handlers
+from handlers.start_handler import start
+from handlers.start_handler import start
 from handlers.market_handler import handle_market
 from services.market_service import MarketService
 from handlers.weather_handler import handle_weather
@@ -21,30 +24,6 @@ from telegram.ext import (
 load_dotenv()
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
-
-limit_manager = UserLimitManager()
-user_service = UserService()
-ai_service = AIService()
-market_service = MarketService()
-
-
-def get_main_keyboard() -> ReplyKeyboardMarkup:
-    """Return the main menu keyboard."""
-
-    keyboard = [
-        ["🧠 دستیار هوشمند", "💵 ارز و طلا"],
-        ["📰 اخبار", "⚽ نتایج فوتبال"],
-        ["🎬 فیلم و سریال", "⛅ آب‌وهوا"],
-        ["🍳 آشپزی", "🧩 چالش روزانه"],
-        ["⏰ یادآورها", "✍️ ابزارهای AI"],
-        ["📩 ارتباط با سازنده"],
-        ["↩️ منوی اصلی"],
-    ]
-
-    return ReplyKeyboardMarkup(
-        keyboard,
-        resize_keyboard=True,
-    )
 
 
 def get_feature_mode(text: str) -> str | None:
@@ -65,34 +44,6 @@ def get_feature_mode(text: str) -> str | None:
     }
 
     return features.get(text)
-
-
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Handle the /start command."""
-
-    context.user_data.pop("mode", None)
-    telegram_user = update.effective_user
-
-    user_service.get_or_create_user(
-        user_id=telegram_user.id,
-        username=telegram_user.username,
-    )
-
-    message = (
-        "سلام 👋\n\n"
-        "به Aydin AI Assistant خوش آمدید.\n\n"
-        "من یک دستیار هوش مصنوعی هستم و در آینده می‌توانم "
-        "در کارهای مختلفی مثل خلاصه‌سازی، ترجمه، بازنویسی و "
-        "پاسخ به سؤال به شما کمک کنم.\n\n"
-        "🚀 به‌زودی قابلیت‌های بیشتری اضافه می‌شود."
-    )
-
-    reply_markup = get_main_keyboard()
-
-    await update.message.reply_text(
-        message,
-        reply_markup=reply_markup,
-    )
 
 
 def get_feature_response(mode: str) -> str:
@@ -125,10 +76,7 @@ async def handle_message(
     """Handle menu selections and user input."""
 
     text = update.message.text
-    user_service.get_or_create_user(
-        user_id=update.effective_user.id,
-        username=update.effective_user.username,
-    )
+
     if text == "↩️ منوی اصلی":
         context.user_data.pop("mode", None)
 
@@ -150,11 +98,7 @@ async def handle_message(
             await update.message.reply_text("🧠 لطفاً درخواست خود را ارسال کنید.")
 
         elif mode == "currency":
-            response = market_service.get_market_report()
-
-            await update.message.reply_text(response)
-
-            context.user_data.pop("mode", None)
+            await handle_market(update, context)
 
         else:
             await update.message.reply_text("✅ قابلیت انتخاب شد.")
@@ -163,44 +107,12 @@ async def handle_message(
 
     mode = context.user_data.get("mode")
 
-    user_id = update.effective_user.id
-    if mode == "currency":
-        response = market_service.get_market_report()
-
-        await update.message.reply_text(response)
-
-        context.user_data.pop("mode", None)
-        return
     if mode == "weather":
         await handle_weather(update, context)
         return
-    if mode == "currency":
-        await handle_market(update, context)
-        return
 
     if mode == "smart_assistant":
-        if mode == "smart_assistant":
-            await handle_ai(update, context)
-            return
-
-        if not limit_manager.can_use_ai(user_id):
-            await update.message.reply_text("⛔ سهمیه رایگان امروز شما تمام شده است.")
-            return
-
-        response = ai_service.ask(
-            user_id=user_id,
-            prompt=text,
-        )
-
-        limit_manager.record_request(user_id)
-
-        remaining = limit_manager.remaining_requests(user_id)
-
-        await update.message.reply_text(
-            response + "\n\n" + f"📊 درخواست رایگان باقی‌مانده امروز: {remaining}"
-        )
-
-        context.user_data.pop("mode", None)
+        await handle_ai(update, context)
         return
 
 
@@ -240,13 +152,10 @@ def main() -> None:
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("cancel", cancel))
 
-    application.add_handler(
-        MessageHandler(
-            filters.TEXT & ~filters.COMMAND,
-            handle_message,
-        )
-    )
+    register_handlers(application)
+
     application.add_error_handler(error_handler)
+
     print("Aydin AI Assistant is running...")
 
     application.run_polling()
