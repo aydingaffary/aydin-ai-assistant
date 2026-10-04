@@ -5,7 +5,6 @@ from telegram.ext import ContextTypes
 
 from services.weather_service import WeatherService
 
-
 weather_service = WeatherService()
 
 

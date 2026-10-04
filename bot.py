@@ -4,8 +4,10 @@ from services.ai_service import AIService
 from database.db import init_database
 from services.limits import UserLimitManager
 from dotenv import load_dotenv
+from handlers.market_handler import handle_market
+from services.market_service import MarketService
 from handlers.weather_handler import handle_weather
-
+from handlers.ai_handler import handle_ai
 from services.user_service import UserService
 from telegram import ReplyKeyboardMarkup, Update
 from telegram.ext import (
@@ -23,7 +25,7 @@ BOT_TOKEN = os.getenv("BOT_TOKEN")
 limit_manager = UserLimitManager()
 user_service = UserService()
 ai_service = AIService()
-
+market_service = MarketService()
 
 
 def get_main_keyboard() -> ReplyKeyboardMarkup:
@@ -143,8 +145,17 @@ async def handle_message(
 
         if mode == "weather":
             await update.message.reply_text("⛅ لطفاً نام شهر خود را وارد کنید.")
+
         elif mode == "smart_assistant":
             await update.message.reply_text("🧠 لطفاً درخواست خود را ارسال کنید.")
+
+        elif mode == "currency":
+            response = market_service.get_market_report()
+
+            await update.message.reply_text(response)
+
+            context.user_data.pop("mode", None)
+
         else:
             await update.message.reply_text("✅ قابلیت انتخاب شد.")
 
@@ -153,11 +164,24 @@ async def handle_message(
     mode = context.user_data.get("mode")
 
     user_id = update.effective_user.id
+    if mode == "currency":
+        response = market_service.get_market_report()
+
+        await update.message.reply_text(response)
+
+        context.user_data.pop("mode", None)
+        return
     if mode == "weather":
         await handle_weather(update, context)
         return
+    if mode == "currency":
+        await handle_market(update, context)
+        return
 
     if mode == "smart_assistant":
+        if mode == "smart_assistant":
+            await handle_ai(update, context)
+            return
 
         if not limit_manager.can_use_ai(user_id):
             await update.message.reply_text("⛔ سهمیه رایگان امروز شما تمام شده است.")
