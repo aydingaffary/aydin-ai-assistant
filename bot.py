@@ -1,4 +1,7 @@
 import os
+
+from services.ai_service import AIService
+from database.db import init_database
 from services.limits import UserLimitManager
 from dotenv import load_dotenv
 from ai_router import AIRouter
@@ -19,6 +22,7 @@ BOT_TOKEN = os.getenv("BOT_TOKEN")
 ai_router = AIRouter()
 limit_manager = UserLimitManager()
 user_service = UserService()
+ai_service = AIService()
 
 def get_main_keyboard() -> ReplyKeyboardMarkup:
     """Return the main menu keyboard."""
@@ -63,6 +67,12 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle the /start command."""
 
     context.user_data.pop("mode", None)
+    telegram_user = update.effective_user
+
+    user_service.get_or_create_user(
+        user_id=telegram_user.id,
+        username=telegram_user.username,
+    )
 
     message = (
         "سلام 👋\n\n"
@@ -138,32 +148,35 @@ async def handle_message(
 
     mode = context.user_data.get("mode")
 
-    if mode == "smart_assistant":
-        user_id = update.effective_user.id
+    print("DEBUG MODE:", mode)
+    user_id = update.effective_user.id
 
-    if not limit_manager.can_use_ai(user_id):
-        await update.message.reply_text(
-            "⛔ سهمیه رایگان امروز شما تمام شده است."
+    if mode == "smart_assistant":
+
+        if not limit_manager.can_use_ai(user_id):
+            await update.message.reply_text(
+                "⛔ سهمیه رایگان امروز شما تمام شده است."
+            )
+            return
+
+        response = ai_service.ask(
+            user_id=user_id,
+            prompt=text,
         )
+
+        limit_manager.record_request(user_id)
+
+        remaining = limit_manager.remaining_requests(user_id)
+
+        await update.message.reply_text(
+            response
+            + "\n\n"
+            + f"📊 درخواست رایگان باقی‌مانده امروز: {remaining}"
+        )
+
+        context.user_data.pop("mode", None)
         return
 
-    response = ai_router.ask_gemini(text)
-
-    limit_manager.record_request(user_id)
-
-    await update.message.reply_text(response)
-    remaining = limit_manager.remaining_requests(user_id)
-
-    await update.message.reply_text(
-    response
-    + "\n\n"
-    + f"📊 درخواست رایگان باقی‌مانده امروز: {remaining}"
-)
-
-    context.user_data.pop("mode", None)
-    return
-
-    await update.message.reply_text("لطفاً ابتدا یکی از گزینه‌های منو را انتخاب کنید.")
 
 
 async def cancel(
@@ -190,6 +203,7 @@ async def error_handler(
 
 
 def main() -> None:
+    init_database()
     """Start the Telegram bot."""
 
     if not BOT_TOKEN:

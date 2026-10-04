@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
 
 
@@ -9,4 +9,4 @@ class User:
     user_id: int
     username: str | None = None
     is_premium: bool = False
-    created_at: datetime = datetime.now()
+    created_at: datetime = field(default_factory=datetime.now)
