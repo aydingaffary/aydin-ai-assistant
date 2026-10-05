@@ -39,7 +39,7 @@ async def start(
 
     user_service.get_or_create_user(
         user_id=telegram_user.id,
-        username=telegram_user.username,
+        username=telegram_user.username or None,
     )
 
     message = (

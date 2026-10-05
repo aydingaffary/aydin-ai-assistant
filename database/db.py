@@ -34,6 +34,25 @@ def init_database():
             FOREIGN KEY(user_id) REFERENCES users(user_id)
         )
         """)
-
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS ai_usage (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            feature TEXT NOT NULL,
+            usage_date TEXT NOT NULL,
+            count INTEGER DEFAULT 1,
+            FOREIGN KEY(user_id) REFERENCES users(user_id)
+        )
+        """)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS favorite_teams (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            team_id INTEGER NOT NULL,
+            team_name TEXT NOT NULL,
+            created_at TEXT NOT NULL,
+            FOREIGN KEY(user_id) REFERENCES users(user_id)
+        )
+    """)
     connection.commit()
     connection.close()

@@ -1,11 +1,21 @@
 import os
 
 from dotenv import load_dotenv
-from telegram.ext import ApplicationBuilder, CommandHandler
+from telegram.ext import (
+    ApplicationBuilder,
+    CommandHandler,
+    CallbackQueryHandler,
+)
 
+from handlers.news_more_handler import handle_news_more
 from database.db import init_database
 from handlers.router import register_handlers
 from handlers.start_handler import start
+from handlers.football_handler import (
+    add_team_callback,
+    show_my_teams,
+    start_team_search,
+)
 
 load_dotenv()
 
@@ -26,7 +36,10 @@ async def cancel(update, context):
 async def error_handler(update, context):
     """Handle unexpected errors."""
 
-    print(f"Bot error: {context.error}")
+    import traceback
+
+    print("BOT ERROR:")
+    traceback.print_exc()
 
 
 def main():
@@ -37,16 +50,69 @@ def main():
     if not BOT_TOKEN:
         raise ValueError("BOT_TOKEN is not set.")
 
-    application = ApplicationBuilder().token(BOT_TOKEN).build()
+    application = (
+        ApplicationBuilder()
+        .token(BOT_TOKEN)
+        .build()
+    )
 
-    application.add_handler(CommandHandler("start", start))
-    application.add_handler(CommandHandler("cancel", cancel))
+    # Commands
+    application.add_handler(
+        CommandHandler(
+            "start",
+            start,
+        )
+    )
 
+    application.add_handler(
+        CommandHandler(
+            "cancel",
+            cancel,
+        )
+    )
+
+    # News more
+    application.add_handler(
+        CallbackQueryHandler(
+            handle_news_more,
+            pattern="^news_more$",
+        )
+    )
+
+    # Football: show user's teams
+    application.add_handler(
+        CallbackQueryHandler(
+            show_my_teams,
+            pattern="^my_teams$",
+        )
+    )
+
+    # Football: start adding team
+    application.add_handler(
+        CallbackQueryHandler(
+            start_team_search,
+            pattern="^add_team_menu$",
+        )
+    )
+
+    # Football: save selected team
+    application.add_handler(
+        CallbackQueryHandler(
+            add_team_callback,
+            pattern="^add_team_",
+        )
+    )
+
+    # Text router
     register_handlers(application)
 
-    application.add_error_handler(error_handler)
+    application.add_error_handler(
+        error_handler
+    )
 
-    print("Aydin AI Assistant is running...")
+    print(
+        "Aydin AI Assistant is running..."
+    )
 
     application.run_polling()
 
