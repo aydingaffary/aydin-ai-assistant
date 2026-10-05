@@ -3,6 +3,7 @@ import os
 from dotenv import load_dotenv
 from google import genai
 from google.genai import errors
+from concurrent.futures import ThreadPoolExecutor, TimeoutError
 
 load_dotenv()
 
@@ -20,6 +21,14 @@ class GeminiProvider:
 
     def generate_response(self, prompt: str) -> str:
         """Generate a response using Gemini."""
+
+        def request():
+            interaction = self.client.interactions.create(
+                model="gemini-3.8-flash",
+                input=prompt,
+            )
+
+            return interaction.output_text
 
         try:
             interaction = self.client.interactions.create(

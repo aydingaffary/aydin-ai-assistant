@@ -12,100 +12,7 @@ load_dotenv()
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 
 
-def get_feature_mode(text: str) -> str | None:
-    """Return the internal mode for a menu option."""
-
-    features = {
-        "🧠 دستیار هوشمند": "smart_assistant",
-        "💵 ارز و طلا": "currency",
-        "📰 اخبار": "news",
-        "⚽ نتایج فوتبال": "football",
-        "🎬 فیلم و سریال": "movies",
-        "⛅ آب‌وهوا": "weather",
-        "🍳 آشپزی": "cooking",
-        "🧩 چالش روزانه": "challenge",
-        "⏰ یادآورها": "reminder",
-        "✍️ ابزارهای AI": "ai_tools",
-        "📩 ارتباط با سازنده": "contact",
-    }
-
-    return features.get(text)
-
-
-def get_feature_response(mode: str) -> str:
-    """Return a temporary response for the selected feature."""
-
-    responses = {
-        "smart_assistant": "🧠 دستیار هوشمند انتخاب شد.",
-        "currency": "💵 بخش ارز و طلا انتخاب شد.",
-        "news": "📰 بخش اخبار انتخاب شد.",
-        "football": "⚽ بخش نتایج فوتبال انتخاب شد.",
-        "movies": "🎬 بخش فیلم و سریال انتخاب شد.",
-        "weather": "⛅ بخش آب‌وهوا انتخاب شد.",
-        "cooking": "🍳 بخش آشپزی انتخاب شد.",
-        "challenge": "🧩 بخش چالش روزانه انتخاب شد.",
-        "reminder": "⏰ بخش یادآورها انتخاب شد.",
-        "ai_tools": "✍️ ابزارهای AI انتخاب شد.",
-        "contact": "📩 بخش ارتباط با سازنده انتخاب شد.",
-    }
-
-    return responses.get(
-        mode,
-        "این قابلیت هنوز پیاده‌سازی نشده است.",
-    )
-
-
-async def handle_message(
-    update: Update,
-    context: ContextTypes.DEFAULT_TYPE,
-) -> None:
-    """Handle menu selections and user input."""
-
-    text = update.message.text
-
-    if text == "↩️ منوی اصلی":
-        context.user_data.pop("mode", None)
-
-        await update.message.reply_text(
-            "↩️ به منوی اصلی برگشتید.",
-            reply_markup=get_main_keyboard(),
-        )
-        return
-
-    mode = get_feature_mode(text)
-
-    if mode:
-        context.user_data["mode"] = mode
-
-        if mode == "weather":
-            await update.message.reply_text("⛅ لطفاً نام شهر خود را وارد کنید.")
-
-        elif mode == "smart_assistant":
-            await update.message.reply_text("🧠 لطفاً درخواست خود را ارسال کنید.")
-
-        elif mode == "currency":
-            await handle_market(update, context)
-
-        else:
-            await update.message.reply_text("✅ قابلیت انتخاب شد.")
-
-        return
-
-    mode = context.user_data.get("mode")
-
-    if mode == "weather":
-        await handle_weather(update, context)
-        return
-
-    if mode == "smart_assistant":
-        await handle_ai(update, context)
-        return
-
-
-async def cancel(
-    update: Update,
-    context: ContextTypes.DEFAULT_TYPE,
-) -> None:
+async def cancel(update, context):
     """Cancel the current operation."""
 
     context.user_data.pop("mode", None)
@@ -116,16 +23,13 @@ async def cancel(
     )
 
 
-async def error_handler(
-    update: object,
-    context: ContextTypes.DEFAULT_TYPE,
-) -> None:
-    """Handle unexpected errors raised by the bot."""
+async def error_handler(update, context):
+    """Handle unexpected errors."""
 
     print(f"Bot error: {context.error}")
 
 
-def main() -> None:
+def main():
     """Start the Telegram bot."""
 
     init_database()

@@ -14,10 +14,20 @@ async def handle_weather(
 ) -> None:
     """Handle weather city input."""
 
-    city = update.message.text
+    city = update.message.text.strip()
 
-    response = weather_service.get_weather(city)
+    if city == "⛅ آب‌وهوا":
+        await update.message.reply_text("⛅ لطفاً نام شهر خود را وارد کنید.")
+        return
 
-    await update.message.reply_text(response)
+    weather = weather_service.get_weather(city)
+
+    if not weather:
+        await update.message.reply_text(
+            "❌ شهر پیدا نشد. لطفاً نام شهر را دقیق وارد کنید."
+        )
+        return
+
+    await update.message.reply_text(weather)
 
     context.user_data.pop("mode", None)

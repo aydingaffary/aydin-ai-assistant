@@ -1,8 +1,11 @@
 """Telegram bot handlers router."""
 
-from telegram.ext import MessageHandler, filters
 from telegram import Update
-from telegram.ext import ContextTypes
+from telegram.ext import (
+    ContextTypes,
+    MessageHandler,
+    filters,
+)
 
 
 def get_feature_mode(text: str) -> str | None:
@@ -25,6 +28,8 @@ async def handle_message(
 
     text = update.message.text
 
+    print("ROUTER:", text)
+
     if text == "↩️ منوی اصلی":
         context.user_data.pop("mode", None)
         return
@@ -34,20 +39,23 @@ async def handle_message(
     if mode:
         context.user_data["mode"] = mode
 
-    if mode == "weather":
-        await update.message.reply_text("⛅ لطفاً نام شهر خود را وارد کنید.")
+        if mode == "weather":
+            await update.message.reply_text("⛅ لطفاً نام شهر خود را وارد کنید.")
+            return
 
-    elif mode == "smart_assistant":
-        await update.message.reply_text("🧠 لطفاً درخواست خود را ارسال کنید.")
+        if mode == "smart_assistant":
+            await update.message.reply_text("🧠 لطفاً درخواست خود را ارسال کنید.")
+            return
 
-    elif mode == "currency":
-        from handlers.market_handler import handle_market
+        if mode == "currency":
+            from handlers.market_handler import handle_market
 
-        await handle_market(update, context)
-
-        return
+            await handle_market(update, context)
+            return
 
     mode = context.user_data.get("mode")
+    
+    print("CURRENT MODE:", mode)
 
     if mode == "weather":
         from handlers.weather_handler import handle_weather

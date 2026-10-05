@@ -30,7 +30,7 @@ class AIService:
             "Conversation history:\n" f"{context}\n\n" "User question:\n" f"{prompt}"
         )
 
-        response = self.ai_router.ask_gemini(final_prompt)
+        response = self.ai_router.ask(final_prompt)
 
         self.message_service.save_message(
             user_id=user_id,
