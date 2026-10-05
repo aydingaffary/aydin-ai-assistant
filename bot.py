@@ -1,25 +1,11 @@
 import os
 
-from services.ai_service import AIService
-from database.db import init_database
-from services.limits import UserLimitManager
 from dotenv import load_dotenv
+from telegram.ext import ApplicationBuilder, CommandHandler
+
+from database.db import init_database
 from handlers.router import register_handlers
 from handlers.start_handler import start
-from handlers.start_handler import start
-from handlers.market_handler import handle_market
-from services.market_service import MarketService
-from handlers.weather_handler import handle_weather
-from handlers.ai_handler import handle_ai
-from services.user_service import UserService
-from telegram import ReplyKeyboardMarkup, Update
-from telegram.ext import (
-    ApplicationBuilder,
-    CommandHandler,
-    ContextTypes,
-    MessageHandler,
-    filters,
-)
 
 load_dotenv()
 

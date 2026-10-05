@@ -1,11 +1,8 @@
 """Telegram bot handlers router."""
 
+from telegram.ext import MessageHandler, filters
 from telegram import Update
 from telegram.ext import ContextTypes
-
-from handlers.ai_handler import handle_ai
-from handlers.market_handler import handle_market
-from handlers.weather_handler import handle_weather
 
 
 def get_feature_mode(text: str) -> str | None:
@@ -37,32 +34,36 @@ async def handle_message(
     if mode:
         context.user_data["mode"] = mode
 
-        if mode == "weather":
-            await update.message.reply_text("⛅ لطفاً نام شهر خود را وارد کنید.")
+    if mode == "weather":
+        await update.message.reply_text("⛅ لطفاً نام شهر خود را وارد کنید.")
 
-        elif mode == "smart_assistant":
-            await update.message.reply_text("🧠 لطفاً درخواست خود را ارسال کنید.")
+    elif mode == "smart_assistant":
+        await update.message.reply_text("🧠 لطفاً درخواست خود را ارسال کنید.")
 
-        elif mode == "currency":
-            await handle_market(update, context)
+    elif mode == "currency":
+        from handlers.market_handler import handle_market
+
+        await handle_market(update, context)
 
         return
 
     mode = context.user_data.get("mode")
 
     if mode == "weather":
+        from handlers.weather_handler import handle_weather
+
         await handle_weather(update, context)
         return
 
     if mode == "smart_assistant":
+        from handlers.ai_handler import handle_ai
+
         await handle_ai(update, context)
         return
 
 
 def register_handlers(application):
     """Register telegram handlers."""
-
-    from telegram.ext import MessageHandler, filters
 
     application.add_handler(
         MessageHandler(
