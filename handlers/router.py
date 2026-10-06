@@ -1,11 +1,14 @@
 """Telegram bot handlers router."""
+
 import logging
+from handlers.cooking_handler import cooking
 from telegram import Update
 from telegram.ext import (
     ContextTypes,
     MessageHandler,
     filters,
 )
+
 logger = logging.getLogger(__name__)
 
 
@@ -19,6 +22,7 @@ def get_feature_mode(text: str) -> str | None:
         "⚽ نتایج فوتبال": "football",
         "⛅ آب‌وهوا": "weather",
         "🎬 فیلم و سریال": "imdb",
+        "🍳 آشپزی": "cooking",
     }
 
     return features.get(text)
@@ -44,9 +48,7 @@ async def handle_message(
         context.user_data["mode"] = mode
 
         if mode == "weather":
-            await update.message.reply_text(
-                "⛅ لطفاً نام شهر خود را وارد کنید."
-            )
+            await update.message.reply_text("⛅ لطفاً نام شهر خود را وارد کنید.")
             return
 
         if mode == "news":
@@ -60,9 +62,7 @@ async def handle_message(
             return
 
         if mode == "smart_assistant":
-            await update.message.reply_text(
-                "🧠 لطفاً درخواست خود را ارسال کنید."
-            )
+            await update.message.reply_text("🧠 لطفاً درخواست خود را ارسال کنید.")
             return
         if mode == "imdb":
             from handlers.imdb_handler import handle_imdb
@@ -81,6 +81,12 @@ async def handle_message(
 
             await handle_football(update, context)
             return
+        elif text == "🍳 آشپزی":
+            await cooking(update, context)
+
+        elif text == "🔄 پیشنهاد بعدی":
+            await next_recipe(update, context)
+
         if mode == "imdb":
             from handlers.imdb_handler import handle_imdb
 

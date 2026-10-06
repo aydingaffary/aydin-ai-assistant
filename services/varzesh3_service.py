@@ -8,7 +8,6 @@ from bs4 import BeautifulSoup
 
 from services.football_provider import FootballProvider
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -43,9 +42,7 @@ class Varzesh3Provider(FootballProvider):
 
         matches = []
 
-        for link in soup.select(
-            'a[href*="/football/match/"]'
-        ):
+        for link in soup.select('a[href*="/football/match/"]'):
             match = self._parse_match_link(link)
 
             if match is None:
@@ -94,12 +91,7 @@ class Varzesh3Provider(FootballProvider):
             strip=True,
         )
 
-        status_element = card.find(
-            string=lambda text: (
-                text
-                and "نتیجه نهایی" in text
-            )
-        )
+        status_element = card.find(string=lambda text: (text and "نتیجه نهایی" in text))
 
         is_finished = status_element is not None
 
@@ -124,16 +116,8 @@ class Varzesh3Provider(FootballProvider):
             "match_id": match_id,
             "home_team": home_team,
             "away_team": away_team,
-            "home_score": (
-                score[0]
-                if score
-                else None
-            ),
-            "away_score": (
-                score[1]
-                if score
-                else None
-            ),
+            "home_score": (score[0] if score else None),
+            "away_score": (score[1] if score else None),
             "status": status,
             "time": match_time,
             "url": f"{self.BASE_URL}{href}",
@@ -214,9 +198,7 @@ class Varzesh3Provider(FootballProvider):
             "img",
             alt=True,
         ):
-            event_type = self.EVENT_TYPES.get(
-                image.get("alt", "").strip()
-            )
+            event_type = self.EVENT_TYPES.get(image.get("alt", "").strip())
 
             if event_type is None:
                 continue
@@ -229,9 +211,7 @@ class Varzesh3Provider(FootballProvider):
             if event_container is None:
                 continue
 
-            minute_element = event_container.find(
-                "span"
-            )
+            minute_element = event_container.find("span")
 
             if minute_element is None:
                 continue
@@ -241,9 +221,7 @@ class Varzesh3Provider(FootballProvider):
                 strip=True,
             ).replace("'", "")
 
-            text_elements = event_container.find_all(
-                "span"
-            )
+            text_elements = event_container.find_all("span")
 
             texts = [
                 element.get_text(

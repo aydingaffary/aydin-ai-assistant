@@ -16,9 +16,7 @@ class IMDbService:
     ) -> list[dict]:
         """Get IMDb US releases for the requested date range."""
 
-        end_date = start_date.fromordinal(
-            start_date.toordinal() + days - 1
-        )
+        end_date = start_date.fromordinal(start_date.toordinal() + days - 1)
 
         releases = []
 
@@ -31,7 +29,6 @@ class IMDbService:
                 timeout=15,
             )
             response.raise_for_status()
-            
 
             soup = BeautifulSoup(response.text, "html.parser")
 
@@ -54,7 +51,6 @@ class IMDbService:
 
         return f"{self.BASE_URL}?region=US"
 
-    
     @staticmethod
     def _headers() -> dict[str, str]:
         return {
@@ -71,6 +67,7 @@ class IMDbService:
             "Accept-Encoding": "gzip, deflate, br",
             "Connection": "keep-alive",
         }
+
     def _parse_releases(
         self,
         soup: BeautifulSoup,

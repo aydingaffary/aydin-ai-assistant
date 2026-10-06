@@ -5,6 +5,7 @@ from services.user_service import UserService
 from database.db import get_connection
 from services.subscription_service import SubscriptionService
 
+
 class AIUsageService:
     """Manage AI request limits."""
 
@@ -56,7 +57,7 @@ class AIUsageService:
         feature: str,
     ) -> None:
         """Register usage."""
-        
+
         if self.subscription_service.has_access(user_id):
             return
 

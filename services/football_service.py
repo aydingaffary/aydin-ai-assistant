@@ -11,10 +11,7 @@ class FootballService:
         self,
         provider_manager: FootballProviderManager | None = None,
     ) -> None:
-        self.provider_manager = (
-            provider_manager
-            or FootballProviderManager()
-        )
+        self.provider_manager = provider_manager or FootballProviderManager()
 
     def search_team(
         self,
@@ -38,10 +35,7 @@ class FootballService:
                 ],
             ]
 
-            if any(
-                query in name
-                for name in names
-            ):
+            if any(query in name for name in names):
                 results.append(
                     {
                         "id": team_id,

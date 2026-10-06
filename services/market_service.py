@@ -4,6 +4,7 @@ import time
 
 from providers.arzdigital_provider import ArzDigitalProvider
 
+
 class MarketService:
     """Prepare market information for users."""
 

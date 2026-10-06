@@ -42,9 +42,7 @@ def test_pipeline_builds_goal_notification():
         ],
     }
 
-    provider_manager = FakeProviderManager(
-        [match]
-    )
+    provider_manager = FakeProviderManager([match])
 
     repository = FakeStateRepository()
 
@@ -101,9 +99,7 @@ def test_pipeline_does_not_duplicate_goal():
         ],
     }
 
-    provider_manager = FakeProviderManager(
-        [match]
-    )
+    provider_manager = FakeProviderManager([match])
 
     repository = FakeStateRepository()
 
@@ -154,9 +150,7 @@ def test_pipeline_ignores_yellow_card():
         ],
     }
 
-    provider_manager = FakeProviderManager(
-        [match]
-    )
+    provider_manager = FakeProviderManager([match])
 
     repository = FakeStateRepository()
 

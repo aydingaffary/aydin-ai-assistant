@@ -62,9 +62,7 @@ def test_start_remove_team(monkeypatch):
         service,
     )
 
-    query = FakeQuery(
-        data="remove_team_menu"
-    )
+    query = FakeQuery(data="remove_team_menu")
 
     update = FakeUpdate(query)
 
@@ -88,9 +86,7 @@ def test_remove_team_callback(monkeypatch):
         service,
     )
 
-    query = FakeQuery(
-        data="remove_team_541"
-    )
+    query = FakeQuery(data="remove_team_541")
 
     update = FakeUpdate(query)
 
@@ -128,9 +124,7 @@ def test_show_live_scores(monkeypatch):
         FakeFootballService,
     )
 
-    query = FakeQuery(
-        data="live_scores"
-    )
+    query = FakeQuery(data="live_scores")
 
     update = FakeUpdate(query)
 

@@ -23,10 +23,7 @@ class FootballNotificationRouter:
         self,
         team_service=None,
     ):
-        self.team_service = (
-            team_service
-            or TeamService()
-        )
+        self.team_service = team_service or TeamService()
 
     def route(
         self,
@@ -34,18 +31,12 @@ class FootballNotificationRouter:
     ) -> list[RoutedFootballNotification]:
         """Route a notification to subscribed users."""
 
-        team_ids = self._get_team_ids(
-            notification
-        )
+        team_ids = self._get_team_ids(notification)
 
         user_ids = set()
 
         for team_id in team_ids:
-            subscribers = (
-                self.team_service.get_subscribers(
-                    team_id
-                )
-            )
+            subscribers = self.team_service.get_subscribers(team_id)
 
             user_ids.update(subscribers)
 
@@ -66,13 +57,9 @@ class FootballNotificationRouter:
         team_ids = []
 
         if notification.match.home_team_id is not None:
-            team_ids.append(
-                notification.match.home_team_id
-            )
+            team_ids.append(notification.match.home_team_id)
 
         if notification.match.away_team_id is not None:
-            team_ids.append(
-                notification.match.away_team_id
-            )
+            team_ids.append(notification.match.away_team_id)
 
         return team_ids

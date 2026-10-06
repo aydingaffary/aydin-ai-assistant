@@ -31,13 +31,9 @@ class GeminiProvider:
                 ) from error
 
             if error.code in (401, 403):
-                raise RuntimeError(
-                    "Gemini authentication failed."
-                ) from error
+                raise RuntimeError("Gemini authentication failed.") from error
 
-            raise RuntimeError(
-                f"Gemini API error: {error.code}"
-            ) from error
+            raise RuntimeError(f"Gemini API error: {error.code}") from error
 
         except errors.ServerError as error:
             raise RuntimeError(

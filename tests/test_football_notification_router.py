@@ -72,10 +72,7 @@ def test_route_to_home_team_subscribers():
 
     routed = router.route(notification)
 
-    assert [
-        item.user_id
-        for item in routed
-    ] == [1001, 1002]
+    assert [item.user_id for item in routed] == [1001, 1002]
 
 
 def test_route_to_away_team_subscribers():
@@ -97,10 +94,7 @@ def test_route_to_away_team_subscribers():
 
     routed = router.route(notification)
 
-    assert [
-        item.user_id
-        for item in routed
-    ] == [2001, 2002]
+    assert [item.user_id for item in routed] == [2001, 2002]
 
 
 def test_user_subscribed_to_both_teams_receives_one_message():
@@ -127,10 +121,7 @@ def test_user_subscribed_to_both_teams_receives_one_message():
 
     routed = router.route(notification)
 
-    assert [
-        item.user_id
-        for item in routed
-    ] == [
+    assert [item.user_id for item in routed] == [
         3001,
         3002,
         3003,

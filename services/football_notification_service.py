@@ -82,11 +82,7 @@ class FootballNotificationService:
     ) -> str:
         """Build match-start notification."""
 
-        return (
-            f"🏁 MATCH STARTED\n"
-            f"{match.home_team} vs "
-            f"{match.away_team}"
-        )
+        return f"🏁 MATCH STARTED\n" f"{match.home_team} vs " f"{match.away_team}"
 
     @staticmethod
     def _build_finished_message(

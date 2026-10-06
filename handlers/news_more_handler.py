@@ -6,7 +6,6 @@ from telegram.ext import ContextTypes
 from services.news_service import NewsService
 from services.subscription_service import SubscriptionService
 
-
 news_service = NewsService()
 subscription_service = SubscriptionService()
 

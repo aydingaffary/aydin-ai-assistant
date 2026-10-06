@@ -4,7 +4,6 @@ import sqlite3
 from contextlib import contextmanager
 from typing import Iterator
 
-
 DATABASE_NAME = "aydin_ai.db"
 
 
@@ -39,19 +38,16 @@ def init_database() -> None:
     with get_connection() as connection:
         connection.execute("PRAGMA journal_mode = WAL")
 
-        connection.execute(
-            """
+        connection.execute("""
             CREATE TABLE IF NOT EXISTS users (
                 user_id INTEGER PRIMARY KEY,
                 username TEXT,
                 is_premium INTEGER DEFAULT 0,
                 created_at TEXT
             )
-            """
-        )
+            """)
 
-        connection.execute(
-            """
+        connection.execute("""
             CREATE TABLE IF NOT EXISTS messages (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 user_id INTEGER NOT NULL,
@@ -60,11 +56,9 @@ def init_database() -> None:
                 created_at TEXT NOT NULL,
                 FOREIGN KEY(user_id) REFERENCES users(user_id)
             )
-            """
-        )
+            """)
 
-        connection.execute(
-            """
+        connection.execute("""
             CREATE TABLE IF NOT EXISTS ai_usage (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 user_id INTEGER NOT NULL,
@@ -73,11 +67,9 @@ def init_database() -> None:
                 count INTEGER DEFAULT 1,
                 FOREIGN KEY(user_id) REFERENCES users(user_id)
             )
-            """
-        )
+            """)
 
-        connection.execute(
-            """
+        connection.execute("""
             CREATE TABLE IF NOT EXISTS favorite_teams (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 user_id INTEGER NOT NULL,
@@ -86,13 +78,10 @@ def init_database() -> None:
                 created_at TEXT NOT NULL,
                 FOREIGN KEY(user_id) REFERENCES users(user_id)
             )
-            """
-        )
+            """)
 
-        connection.execute(
-            """
+        connection.execute("""
             CREATE UNIQUE INDEX IF NOT EXISTS
             idx_favorite_teams_user_team
             ON favorite_teams(user_id, team_id)
-            """
-        )
+            """)

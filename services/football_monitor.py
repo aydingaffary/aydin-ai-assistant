@@ -23,46 +23,26 @@ class FootballMonitor:
     ):
         self.provider_manager = provider_manager
 
-        self.state_repository = (
-            state_repository
-            or FootballStateRepository()
-        )
+        self.state_repository = state_repository or FootballStateRepository()
 
-        self.event_detector = (
-            event_detector
-            or FootballEventDetector()
-        )
+        self.event_detector = event_detector or FootballEventDetector()
 
     def check(self) -> list[DetectedEvent]:
         """Check live matches and detect new events."""
 
-        matches = (
-            self.provider_manager.get_live_matches()
-        )
+        matches = self.provider_manager.get_live_matches()
 
         detected_events = []
 
         for raw_match in matches:
-            current = (
-                FootballNormalizer.normalize_match(
-                    raw_match
-                )
-            )
+            current = FootballNormalizer.normalize_match(raw_match)
 
-            previous_state = (
-                self.state_repository.get(
-                    current.match_id
-                )
-            )
+            previous_state = self.state_repository.get(current.match_id)
 
             previous = None
 
             if previous_state is not None:
-                previous = (
-                    FootballNormalizer.normalize_match(
-                        previous_state
-                    )
-                )
+                previous = FootballNormalizer.normalize_match(previous_state)
 
             events = self.event_detector.detect(
                 previous,

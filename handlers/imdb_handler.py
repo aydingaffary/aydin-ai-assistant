@@ -23,17 +23,13 @@ async def handle_imdb(
     )
 
     if not releases:
-        await update.message.reply_text(
-            "🎬 در ۷ روز آینده انتشار جدیدی پیدا نشد."
-        )
+        await update.message.reply_text("🎬 در ۷ روز آینده انتشار جدیدی پیدا نشد.")
         return
 
     text = "🎬 انتشارهای این هفته:\n\n"
 
     for item in releases[:10]:
-        jalali_date = format_jalali_date(
-            item["release_date"]
-        )
+        jalali_date = format_jalali_date(item["release_date"])
 
         text += (
             f"📅 {jalali_date}\n"

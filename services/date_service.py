@@ -26,28 +26,16 @@ def gregorian_to_jalali(g_date: date) -> tuple[int, int, int]:
         31,
     ]
 
-    
     gy -= 1600
     gm -= 1
     gd -= 1
 
-    g_day_no = (
-        365 * gy
-        + (gy + 3) // 4
-        - (gy + 99) // 100
-        + (gy + 399) // 400
-    )
+    g_day_no = 365 * gy + (gy + 3) // 4 - (gy + 99) // 100 + (gy + 399) // 400
 
     for i in range(gm):
         g_day_no += g_days_in_month[i + 1]
 
-    if gm > 1 and (
-        gy % 4 == 0
-        and (
-            gy % 100 != 0
-            or gy % 400 == 0
-        )
-    ):
+    if gm > 1 and (gy % 4 == 0 and (gy % 100 != 0 or gy % 400 == 0)):
         g_day_no += 1
 
     g_day_no += gd

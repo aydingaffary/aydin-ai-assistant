@@ -83,6 +83,8 @@ def test_parse_finished_match():
     assert result["away_team"] == "جیمناسیا مندوزا"
     assert result["home_score"] == 3
     assert result["away_score"] == 0
+
+
 def test_parse_goal_events():
     html = """
     <div>

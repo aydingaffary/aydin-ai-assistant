@@ -19,9 +19,7 @@ class EmptyProvider:
 
 class FailingProvider:
     def get_live_matches(self):
-        raise RuntimeError(
-            "Provider unavailable"
-        )
+        raise RuntimeError("Provider unavailable")
 
 
 def test_manager_uses_first_successful_provider():

@@ -22,46 +22,30 @@ class ReleaseService:
         if not TMDB_API_KEY:
             return []
 
-        end_date = start_date + timedelta(
-            days=days - 1
-        )
+        end_date = start_date + timedelta(days=days - 1)
 
         response = requests.get(
             f"{self.BASE_URL}/discover/movie",
             params={
                 "api_key": TMDB_API_KEY,
                 "region": "US",
-                "primary_release_date.gte": (
-                    start_date.isoformat()
-                ),
-                "primary_release_date.lte": (
-                    end_date.isoformat()
-                ),
-                "sort_by": (
-                    "primary_release_date.asc"
-                ),
+                "primary_release_date.gte": (start_date.isoformat()),
+                "primary_release_date.lte": (end_date.isoformat()),
+                "sort_by": ("primary_release_date.asc"),
             },
             timeout=15,
         )
 
         response.raise_for_status()
 
-        results = response.json().get(
-            "results",
-            []
-        )
+        results = response.json().get("results", [])
 
         return [
             {
                 "title": movie["title"],
-                "release_date": date.fromisoformat(
-                    movie["release_date"]
-                ),
+                "release_date": date.fromisoformat(movie["release_date"]),
                 "type": "movie",
-                "url": (
-                    "https://www.themoviedb.org/movie/"
-                    f"{movie['id']}"
-                ),
+                "url": ("https://www.themoviedb.org/movie/" f"{movie['id']}"),
             }
             for movie in results
             if movie.get("release_date")

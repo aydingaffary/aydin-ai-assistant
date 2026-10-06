@@ -7,7 +7,6 @@ from services.ai_usage_service import AIUsageService
 from services.news_service import NewsService
 from services.subscription_service import SubscriptionService
 
-
 usage_service = AIUsageService()
 news_service = NewsService()
 subscription_service = SubscriptionService()
@@ -43,9 +42,7 @@ async def handle_news(
     )
 
     if not news:
-        await update.message.reply_text(
-            f"❌ خبری درباره «{topic}» پیدا نشد."
-        )
+        await update.message.reply_text(f"❌ خبری درباره «{topic}» پیدا نشد.")
         return
 
     response = f"📰 اخبار درباره {topic}\n\n"
@@ -63,10 +60,7 @@ async def handle_news(
             "news",
         )
 
-        response += (
-            "🔒 برای مشاهده اخبار بیشتر و دسترسی نامحدود "
-            "اشتراک تهیه کنید."
-        )
+        response += "🔒 برای مشاهده اخبار بیشتر و دسترسی نامحدود " "اشتراک تهیه کنید."
 
     keyboard = [
         [
@@ -74,7 +68,7 @@ async def handle_news(
                 "📰 اخبار بیشتر",
                 callback_data="news_more",
             )
-        ]   
+        ]
     ]
 
     reply_markup = InlineKeyboardMarkup(keyboard)

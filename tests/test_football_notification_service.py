@@ -22,6 +22,7 @@ def create_match():
         events=[],
     )
 
+
 def test_goal_notification():
     service = FootballNotificationService()
 

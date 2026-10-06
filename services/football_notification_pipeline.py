@@ -36,36 +36,25 @@ class FootballNotificationPipeline:
     ):
         self.monitor = monitor
         self.notification_service = (
-            notification_service
-            or FootballNotificationService()
+            notification_service or FootballNotificationService()
         )
 
     def check(self) -> list[FootballNotification]:
         """Check matches and build notifications."""
 
-        matches = (
-            self.monitor.provider_manager.get_live_matches()
-        )
+        matches = self.monitor.provider_manager.get_live_matches()
 
         notifications = []
 
         for raw_match in matches:
-            current = FootballNormalizer.normalize_match(
-                raw_match
-            )
+            current = FootballNormalizer.normalize_match(raw_match)
 
-            previous_state = (
-                self.monitor.state_repository.get(
-                    current.match_id
-                )
-            )
+            previous_state = self.monitor.state_repository.get(current.match_id)
 
             previous = None
 
             if previous_state is not None:
-                previous = FootballNormalizer.normalize_match(
-                    previous_state
-                )
+                previous = FootballNormalizer.normalize_match(previous_state)
 
             events = self.monitor.event_detector.detect(
                 previous,
@@ -95,11 +84,9 @@ class FootballNotificationPipeline:
             )
 
             for event in events:
-                message = (
-                    self.notification_service.build_message(
-                        event,
-                        current,
-                    )
+                message = self.notification_service.build_message(
+                    event,
+                    current,
                 )
 
                 if message is None:

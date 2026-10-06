@@ -72,18 +72,14 @@ class FootballNormalizer:
 
             events.append(
                 NormalizedEvent(
-                    minute=str(
-                        event.get("minute", "")
-                    ),
+                    minute=str(event.get("minute", "")),
                     type=event_type,
                     player=event.get("player"),
                 )
             )
 
         return NormalizedMatch(
-            match_id=str(
-                match.get("match_id", "")
-            ),
+            match_id=str(match.get("match_id", "")),
             home_team_id=home_team_id,
             home_team=match.get(
                 "home_team",

@@ -21,10 +21,7 @@ class FootballTeamMapper:
                     {},
                 )
 
-                if (
-                    provider_ids.get(provider)
-                    == provider_team_id
-                ):
+                if provider_ids.get(provider) == provider_team_id:
                     return team_id
 
         normalized_name = team_name.lower().strip()

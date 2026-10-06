@@ -16,14 +16,12 @@ class FootballStateRepository:
         """Save the latest match state."""
 
         with get_connection() as connection:
-            connection.execute(
-                """
+            connection.execute("""
                 CREATE TABLE IF NOT EXISTS football_match_states (
                     match_id TEXT PRIMARY KEY,
                     state TEXT NOT NULL
                 )
-                """
-            )
+                """)
 
             connection.execute(
                 """

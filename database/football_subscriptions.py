@@ -9,15 +9,13 @@ class FootballSubscriptionRepository:
     def _create_table(self, connection) -> None:
         """Create the subscriptions table if needed."""
 
-        connection.execute(
-            """
+        connection.execute("""
             CREATE TABLE IF NOT EXISTS football_subscriptions (
                 user_id INTEGER NOT NULL,
                 team_id INTEGER NOT NULL,
                 PRIMARY KEY (user_id, team_id)
             )
-            """
-        )
+            """)
 
     def subscribe(
         self,
@@ -84,10 +82,7 @@ class FootballSubscriptionRepository:
                 (team_id,),
             ).fetchall()
 
-            return [
-                row[0]
-                for row in rows
-            ]
+            return [row[0] for row in rows]
 
     def get_user_teams(
         self,
@@ -108,7 +103,4 @@ class FootballSubscriptionRepository:
                 (user_id,),
             ).fetchall()
 
-            return [
-                row[0]
-                for row in rows
-            ]
+            return [row[0] for row in rows]

@@ -58,16 +58,9 @@ class NewsService:
         filtered_news = []
 
         for item in all_news:
-            text = (
-                item.get("title", "")
-                + " "
-                + item.get("summary", "")
-            ).lower()
+            text = (item.get("title", "") + " " + item.get("summary", "")).lower()
 
-            if any(
-                word in text
-                for word in search_words
-            ):
+            if any(word in text for word in search_words):
                 filtered_news.append(item)
 
         selected = []

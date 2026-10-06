@@ -6,6 +6,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 import requests
 
+
 class ArzDigitalProvider:
     """Get market prices from ArzDigital."""
 
@@ -75,8 +76,8 @@ class ArzDigitalProvider:
 
         with ThreadPoolExecutor(max_workers=5) as executor:
             results = executor.map(
-            self.get_exchange_price,
-            urls.values(),
-        )
+                self.get_exchange_price,
+                urls.values(),
+            )
 
         return dict(zip(urls.keys(), results))

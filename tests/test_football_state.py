@@ -26,9 +26,7 @@ def test_save_and_get_match_state():
 def test_get_unknown_match_returns_none():
     repository = FootballStateRepository()
 
-    result = repository.get(
-        "unknown-test-match"
-    )
+    result = repository.get("unknown-test-match")
 
     assert result is None
 
@@ -58,8 +56,6 @@ def test_save_updates_existing_state():
         second_state,
     )
 
-    result = repository.get(
-        "test-update-123"
-    )
+    result = repository.get("test-update-123")
 
     assert result == second_state

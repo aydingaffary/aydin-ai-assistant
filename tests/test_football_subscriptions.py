@@ -16,9 +16,7 @@ def test_subscribe_and_get_subscribers():
         team_id=10,
     )
 
-    subscribers = repository.get_subscribers(
-        team_id=10
-    )
+    subscribers = repository.get_subscribers(team_id=10)
 
     assert subscribers == [1001, 1002]
 
@@ -36,9 +34,7 @@ def test_duplicate_subscription_is_ignored():
         team_id=20,
     )
 
-    subscribers = repository.get_subscribers(
-        team_id=20
-    )
+    subscribers = repository.get_subscribers(team_id=20)
 
     assert subscribers == [2001]
 
@@ -56,9 +52,7 @@ def test_unsubscribe():
         team_id=30,
     )
 
-    subscribers = repository.get_subscribers(
-        team_id=30
-    )
+    subscribers = repository.get_subscribers(team_id=30)
 
     assert subscribers == []
 
@@ -81,9 +75,7 @@ def test_get_user_teams():
         team_id=60,
     )
 
-    teams = repository.get_user_teams(
-        user_id=4001
-    )
+    teams = repository.get_user_teams(user_id=4001)
 
     assert teams == [40, 50, 60]
 
@@ -106,9 +98,7 @@ def test_different_users_can_follow_same_team():
         team_id=70,
     )
 
-    subscribers = repository.get_subscribers(
-        team_id=70
-    )
+    subscribers = repository.get_subscribers(team_id=70)
 
     assert subscribers == [
         5001,

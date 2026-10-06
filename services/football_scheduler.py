@@ -38,13 +38,9 @@ class FootballScheduler:
         if self.task is not None:
             return
 
-        self.task = asyncio.create_task(
-            self._run(application)
-        )
+        self.task = asyncio.create_task(self._run(application))
 
-        logger.info(
-            "Football scheduler started."
-        )
+        logger.info("Football scheduler started.")
 
     async def stop(self) -> None:
         """Stop the background polling task."""
@@ -61,9 +57,7 @@ class FootballScheduler:
 
         self.task = None
 
-        logger.info(
-            "Football scheduler stopped."
-        )
+        logger.info("Football scheduler stopped.")
 
     async def _run(
         self,
@@ -73,16 +67,10 @@ class FootballScheduler:
 
         while True:
             try:
-                notifications = await asyncio.to_thread(
-                    self.pipeline.check
-                )
+                notifications = await asyncio.to_thread(self.pipeline.check)
 
                 for notification in notifications:
-                    routed_notifications = (
-                        self.router.route(
-                            notification
-                        )
-                    )
+                    routed_notifications = self.router.route(notification)
 
                     for routed in routed_notifications:
                         try:
@@ -93,8 +81,7 @@ class FootballScheduler:
 
                         except Exception:
                             logger.exception(
-                                "Failed to send football notification "
-                                "to user %s.",
+                                "Failed to send football notification " "to user %s.",
                                 routed.user_id,
                             )
 
@@ -102,10 +89,6 @@ class FootballScheduler:
                 raise
 
             except Exception:
-                logger.exception(
-                    "Football scheduler check failed."
-                )
+                logger.exception("Football scheduler check failed.")
 
-            await asyncio.sleep(
-                self.INTERVAL
-            )
+            await asyncio.sleep(self.INTERVAL)

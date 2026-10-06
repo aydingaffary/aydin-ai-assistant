@@ -89,9 +89,7 @@ def test_monitor_does_not_duplicate_events():
         ],
     }
 
-    provider_manager = FakeProviderManager(
-        [match]
-    )
+    provider_manager = FakeProviderManager([match])
 
     repository = FakeStateRepository()
 

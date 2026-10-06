@@ -6,7 +6,6 @@ from services.api_football_service import APIFootballProvider
 from services.football_provider import FootballProvider
 from services.varzesh3_service import Varzesh3Provider
 
-
 logger = logging.getLogger(__name__)
 
 

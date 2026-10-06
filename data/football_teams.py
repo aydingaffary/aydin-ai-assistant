@@ -1,6 +1,5 @@
 """Football teams list."""
 
-
 TEAMS = {
     1: {
         "name": "Real Madrid",

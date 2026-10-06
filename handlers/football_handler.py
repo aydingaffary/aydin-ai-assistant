@@ -10,7 +10,6 @@ from telegram.ext import ContextTypes
 from services.football_service import FootballService
 from services.team_service import TeamService
 
-
 team_service = TeamService()
 
 
@@ -75,8 +74,7 @@ async def handle_team_search(
 
     if not teams:
         await update.message.reply_text(
-            "❌ تیمی پیدا نشد.\n"
-            "نام دیگری را امتحان کنید."
+            "❌ تیمی پیدا نشد.\n" "نام دیگری را امتحان کنید."
         )
         return
 
@@ -119,9 +117,7 @@ async def add_team_callback(
     team = FootballService().get_team(team_id)
 
     if not team:
-        await query.edit_message_text(
-            "❌ تیم پیدا نشد."
-        )
+        await query.edit_message_text("❌ تیم پیدا نشد.")
         return
 
     team_service.add_team(
@@ -130,9 +126,7 @@ async def add_team_callback(
         team["name"],
     )
 
-    await query.edit_message_text(
-        f"✅ {team['name']} اضافه شد."
-    )
+    await query.edit_message_text(f"✅ {team['name']} اضافه شد.")
 
 
 async def show_my_teams(
@@ -144,9 +138,7 @@ async def show_my_teams(
     query = update.callback_query
     await query.answer()
 
-    teams = team_service.get_teams(
-        query.from_user.id
-    )
+    teams = team_service.get_teams(query.from_user.id)
 
     if not teams:
         text = "❌ هنوز تیمی انتخاب نکرده‌اید."
@@ -191,9 +183,7 @@ async def show_live_scores(
     matches = FootballService().get_live_matches()
 
     if not matches:
-        await query.edit_message_text(
-            "🔴 در حال حاضر بازی زنده‌ای پیدا نشد."
-        )
+        await query.edit_message_text("🔴 در حال حاضر بازی زنده‌ای پیدا نشد.")
         return
 
     text = "🔴 بازی‌های زنده:\n\n"
@@ -208,19 +198,10 @@ async def show_live_scores(
             "Unknown",
         )
 
-        home_score = match.get(
-            "home_score"
-        )
-        away_score = match.get(
-            "away_score"
-        )
+        home_score = match.get("home_score")
+        away_score = match.get("away_score")
 
-        text += (
-            f"⚽ {home} "
-            f"{home_score} - "
-            f"{away_score} "
-            f"{away}\n\n"
-        )
+        text += f"⚽ {home} " f"{home_score} - " f"{away_score} " f"{away}\n\n"
 
     await query.edit_message_text(text)
 
@@ -234,14 +215,10 @@ async def start_remove_team(
     query = update.callback_query
     await query.answer()
 
-    teams = team_service.get_teams(
-        query.from_user.id
-    )
+    teams = team_service.get_teams(query.from_user.id)
 
     if not teams:
-        await query.edit_message_text(
-            "❌ تیمی برای حذف وجود ندارد."
-        )
+        await query.edit_message_text("❌ تیمی برای حذف وجود ندارد.")
         return
 
     keyboard = []
@@ -251,18 +228,14 @@ async def start_remove_team(
             [
                 InlineKeyboardButton(
                     f"🗑 {team['team_name']}",
-                    callback_data=(
-                        f"remove_team_{team['team_id']}"
-                    ),
+                    callback_data=(f"remove_team_{team['team_id']}"),
                 )
             ]
         )
 
     await query.edit_message_text(
         "🗑 تیم مورد نظر برای حذف را انتخاب کنید:",
-        reply_markup=InlineKeyboardMarkup(
-            keyboard
-        ),
+        reply_markup=InlineKeyboardMarkup(keyboard),
     )
 
 
@@ -289,6 +262,4 @@ async def remove_team_callback(
         team_id,
     )
 
-    await query.edit_message_text(
-        "✅ تیم با موفقیت حذف شد."
-    )
+    await query.edit_message_text("✅ تیم با موفقیت حذف شد.")

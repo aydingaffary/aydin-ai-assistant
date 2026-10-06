@@ -25,9 +25,7 @@ def test_normalize_penalty_and_own_goal():
         ],
     }
 
-    result = FootballNormalizer.normalize_match(
-        match
-    )
+    result = FootballNormalizer.normalize_match(match)
 
     assert len(result.events) == 2
 
@@ -52,9 +50,7 @@ def test_normalize_red_card():
         ],
     }
 
-    result = FootballNormalizer.normalize_match(
-        match
-    )
+    result = FootballNormalizer.normalize_match(match)
 
     assert len(result.events) == 1
     assert result.events[0].type == "red_card"
@@ -83,11 +79,11 @@ def test_normalize_ignores_unneeded_events():
         ],
     }
 
-    result = FootballNormalizer.normalize_match(
-        match
-    )
+    result = FootballNormalizer.normalize_match(match)
 
     assert result.events == []
+
+
 def test_normalize_provider_team_ids_to_internal_ids():
     match = {
         "provider": "api_football",
@@ -102,9 +98,7 @@ def test_normalize_provider_team_ids_to_internal_ids():
         "events": [],
     }
 
-    normalized = FootballNormalizer.normalize_match(
-        match
-    )
+    normalized = FootballNormalizer.normalize_match(match)
 
     assert normalized.home_team_id == 2
     assert normalized.away_team_id == 1

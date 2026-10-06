@@ -30,10 +30,7 @@ class FootballEventDetector:
 
         events = []
 
-        if (
-            previous.status != "live"
-            and current.status == "live"
-        ):
+        if previous.status != "live" and current.status == "live":
             events.append(
                 DetectedEvent(
                     type="match_started",
@@ -41,10 +38,7 @@ class FootballEventDetector:
                 )
             )
 
-        if (
-            previous.status == "live"
-            and current.status == "finished"
-        ):
+        if previous.status == "live" and current.status == "finished":
             events.append(
                 DetectedEvent(
                     type="match_finished",

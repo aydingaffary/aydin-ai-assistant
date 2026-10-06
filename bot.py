@@ -1,4 +1,3 @@
-
 import logging
 
 from logging_config import setup_logging
@@ -8,7 +7,14 @@ from telegram.ext import (
     CommandHandler,
     CallbackQueryHandler,
 )
-
+from handlers.cooking_handler import (
+    cooking,
+    next_recipe,
+)
+from handlers.cooking_handler import (
+    cooking,
+    next_recipe,
+)
 from handlers.news_more_handler import handle_news_more
 from database.db import init_database
 from handlers.router import register_handlers
@@ -55,38 +61,31 @@ async def error_handler(update, context):
         "Bot error",
         exc_info=context.error,
     )
+
+
 async def post_init(application):
     """Start background services."""
 
     football_scheduler = FootballScheduler(
         pipeline=FootballNotificationPipeline(
-            monitor=FootballMonitor(
-                provider_manager=FootballProviderManager()
-            )
+            monitor=FootballMonitor(provider_manager=FootballProviderManager())
         ),
         router=FootballNotificationRouter(),
     )
 
-    application.bot_data["football_scheduler"] = (
-        football_scheduler
-    )
+    application.bot_data["football_scheduler"] = football_scheduler
 
-    await football_scheduler.start(
-        application
-    )
+    await football_scheduler.start(application)
 
 
 async def post_shutdown(application):
     """Stop background services."""
 
-    football_scheduler = (
-        application.bot_data.get(
-            "football_scheduler"
-        )
-    )
+    football_scheduler = application.bot_data.get("football_scheduler")
 
     if football_scheduler is not None:
         await football_scheduler.stop()
+
 
 def main():
     """Start the Telegram bot."""
@@ -109,6 +108,12 @@ def main():
         CommandHandler(
             "start",
             start,
+        )
+    )
+    application.add_handler(
+        CallbackQueryHandler(
+            next_recipe,
+            pattern="^next_recipe$",
         )
     )
 
@@ -173,18 +178,14 @@ def main():
             pattern="^remove_team_",
         )
     )
+    application.add_handler(CallbackQueryHandler(next_recipe, pattern="^next_recipe$"))
 
-    
     # Text router
     register_handlers(application)
 
-    application.add_error_handler(
-        error_handler
-    )
+    application.add_error_handler(error_handler)
 
-    logging.getLogger(__name__).info(
-        "Aydin AI Assistant is running..."
-    )
+    logging.getLogger(__name__).info("Aydin AI Assistant is running...")
 
     application.run_polling()
 

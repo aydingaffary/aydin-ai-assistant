@@ -72,10 +72,7 @@ class TeamService:
                 (team_id,),
             ).fetchall()
 
-        return [
-            row[0]
-            for row in rows
-        ]
+        return [row[0] for row in rows]
 
     def remove_team(
         self,

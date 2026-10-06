@@ -2,7 +2,10 @@
 
 import feedparser
 import logging
+
 logger = logging.getLogger(__name__)
+
+
 class RSSNewsProvider:
     """Fetch news from multiple RSS feeds."""
 
@@ -26,9 +29,7 @@ class RSSNewsProvider:
         news = []
 
         sources = (
-            {source: self.SOURCES[source]}
-            if source in self.SOURCES
-            else self.SOURCES
+            {source: self.SOURCES[source]} if source in self.SOURCES else self.SOURCES
         )
 
         for name, url in sources.items():

@@ -20,6 +20,4 @@ def test_get_releases():
         assert "type" in release
 
         assert release["type"] in {"movie", "tv"}
-        assert date(2026, 10, 6) <= release["release_date"] <= date(
-            2026, 10, 12
-        )
+        assert date(2026, 10, 6) <= release["release_date"] <= date(2026, 10, 12)

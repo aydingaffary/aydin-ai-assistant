@@ -6,9 +6,7 @@ from services.api_football_service import (
 def test_get_live_matches_normalizes_api_football_response(
     monkeypatch,
 ):
-    provider = object.__new__(
-        APIFootballProvider
-    )
+    provider = object.__new__(APIFootballProvider)
 
     class FakeResponse:
         def raise_for_status(self):
@@ -21,9 +19,7 @@ def test_get_live_matches_normalizes_api_football_response(
                         "fixture": {
                             "id": 12345,
                             "date": "2026-10-06T18:00:00+00:00",
-                            "status": {
-                                "short": "2H"
-                            },
+                            "status": {"short": "2H"},
                         },
                         "teams": {
                             "home": {
@@ -51,9 +47,7 @@ def test_get_live_matches_normalizes_api_football_response(
         fake_get,
     )
 
-    provider.headers = {
-        "x-apisports-key": "test-key"
-    }
+    provider.headers = {"x-apisports-key": "test-key"}
 
     matches = provider.get_live_matches()
 
@@ -73,31 +67,19 @@ def test_get_live_matches_normalizes_api_football_response(
     assert match["away_score"] == 1
 
     assert match["status"] == "live"
+
+
 def test_normalize_status():
-    assert (
-        APIFootballProvider._normalize_status("1H")
-        == "live"
-    )
+    assert APIFootballProvider._normalize_status("1H") == "live"
 
-    assert (
-        APIFootballProvider._normalize_status("2H")
-        == "live"
-    )
+    assert APIFootballProvider._normalize_status("2H") == "live"
 
-    assert (
-        APIFootballProvider._normalize_status("HT")
-        == "live"
-    )
+    assert APIFootballProvider._normalize_status("HT") == "live"
 
-    assert (
-        APIFootballProvider._normalize_status("FT")
-        == "finished"
-    )
+    assert APIFootballProvider._normalize_status("FT") == "finished"
 
-    assert (
-        APIFootballProvider._normalize_status("NS")
-        == "scheduled"
-    )
+    assert APIFootballProvider._normalize_status("NS") == "scheduled"
+
 
 def test_parse_events():
     events = [
@@ -158,9 +140,7 @@ def test_parse_events():
         },
     ]
 
-    parsed = APIFootballProvider._parse_events(
-        events
-    )
+    parsed = APIFootballProvider._parse_events(events)
 
     assert parsed == [
         {
