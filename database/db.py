@@ -2,7 +2,6 @@
 
 import sqlite3
 from contextlib import contextmanager
-from pathlib import Path
 from typing import Iterator
 
 
@@ -87,5 +86,13 @@ def init_database() -> None:
                 created_at TEXT NOT NULL,
                 FOREIGN KEY(user_id) REFERENCES users(user_id)
             )
+            """
+        )
+
+        connection.execute(
+            """
+            CREATE UNIQUE INDEX IF NOT EXISTS
+            idx_favorite_teams_user_team
+            ON favorite_teams(user_id, team_id)
             """
         )
