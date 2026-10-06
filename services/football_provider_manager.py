@@ -4,6 +4,7 @@ import logging
 
 from services.api_football_service import APIFootballProvider
 from services.football_provider import FootballProvider
+from services.varzesh3_service import Varzesh3Provider
 
 
 logger = logging.getLogger(__name__)
@@ -21,6 +22,7 @@ class FootballProviderManager:
         else:
             self.providers = [
                 APIFootballProvider(),
+                Varzesh3Provider(),
             ]
 
     def get_live_matches(self) -> list[dict]:
@@ -42,7 +44,6 @@ class FootballProviderManager:
                         "Football provider succeeded: %s",
                         provider_name,
                     )
-
                     return matches
 
                 logger.warning(
@@ -57,8 +58,5 @@ class FootballProviderManager:
                     error,
                 )
 
-        logger.error(
-            "All football providers failed."
-        )
-
+        logger.error("All football providers failed.")
         return []
