@@ -2,12 +2,10 @@
 
 from dataclasses import dataclass
 
-from database.football_subscriptions import (
-    FootballSubscriptionRepository,
-)
 from services.football_notification_pipeline import (
     FootballNotification,
 )
+from services.team_service import TeamService
 
 
 @dataclass
@@ -23,11 +21,11 @@ class FootballNotificationRouter:
 
     def __init__(
         self,
-        subscription_repository=None,
+        team_service=None,
     ):
-        self.subscription_repository = (
-            subscription_repository
-            or FootballSubscriptionRepository()
+        self.team_service = (
+            team_service
+            or TeamService()
         )
 
     def route(
@@ -44,7 +42,7 @@ class FootballNotificationRouter:
 
         for team_id in team_ids:
             subscribers = (
-                self.subscription_repository.get_subscribers(
+                self.team_service.get_subscribers(
                     team_id
                 )
             )

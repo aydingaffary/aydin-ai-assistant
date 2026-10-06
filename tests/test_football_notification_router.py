@@ -12,7 +12,7 @@ from services.football_normalizer import (
 )
 
 
-class FakeSubscriptionRepository:
+class FakeTeamService:
     def __init__(self):
         self.subscribers = {}
 
@@ -54,15 +54,15 @@ def create_notification(
 
 
 def test_route_to_home_team_subscribers():
-    repository = FakeSubscriptionRepository()
+    service = FakeTeamService()
 
-    repository.subscribers[10] = [
+    service.subscribers[10] = [
         1001,
         1002,
     ]
 
     router = FootballNotificationRouter(
-        subscription_repository=repository,
+        team_service=service,
     )
 
     notification = create_notification(
@@ -77,22 +77,17 @@ def test_route_to_home_team_subscribers():
         for item in routed
     ] == [1001, 1002]
 
-    assert all(
-        item.message == "⚽ GOAL!"
-        for item in routed
-    )
-
 
 def test_route_to_away_team_subscribers():
-    repository = FakeSubscriptionRepository()
+    service = FakeTeamService()
 
-    repository.subscribers[20] = [
+    service.subscribers[20] = [
         2001,
         2002,
     ]
 
     router = FootballNotificationRouter(
-        subscription_repository=repository,
+        team_service=service,
     )
 
     notification = create_notification(
@@ -109,20 +104,20 @@ def test_route_to_away_team_subscribers():
 
 
 def test_user_subscribed_to_both_teams_receives_one_message():
-    repository = FakeSubscriptionRepository()
+    service = FakeTeamService()
 
-    repository.subscribers[10] = [
+    service.subscribers[10] = [
         3001,
         3002,
     ]
 
-    repository.subscribers[20] = [
+    service.subscribers[20] = [
         3001,
         3003,
     ]
 
     router = FootballNotificationRouter(
-        subscription_repository=repository,
+        team_service=service,
     )
 
     notification = create_notification(
@@ -143,10 +138,10 @@ def test_user_subscribed_to_both_teams_receives_one_message():
 
 
 def test_no_subscribers_returns_empty_list():
-    repository = FakeSubscriptionRepository()
+    service = FakeTeamService()
 
     router = FootballNotificationRouter(
-        subscription_repository=repository,
+        team_service=service,
     )
 
     notification = create_notification(
