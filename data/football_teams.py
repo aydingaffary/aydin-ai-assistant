@@ -10,6 +10,9 @@ TEAMS = {
             "رئال",
             "رئال مادرید",
         ],
+        "provider_ids": {
+            "api_football": 541,
+        },
     },
     2: {
         "name": "Barcelona",
@@ -19,6 +22,9 @@ TEAMS = {
             "بارسا",
             "بارسلونا",
         ],
+        "provider_ids": {
+            "api_football": 529,
+        },
     },
     3: {
         "name": "Liverpool",
@@ -26,6 +32,9 @@ TEAMS = {
             "liverpool",
             "لیورپول",
         ],
+        "provider_ids": {
+            "api_football": 40,
+        },
     },
     4: {
         "name": "Manchester United",
@@ -35,6 +44,9 @@ TEAMS = {
             "منچستر یونایتد",
             "منچستر",
         ],
+        "provider_ids": {
+            "api_football": 33,
+        },
     },
     5: {
         "name": "Manchester City",
@@ -43,6 +55,9 @@ TEAMS = {
             "manchester city",
             "منچستر سیتی",
         ],
+        "provider_ids": {
+            "api_football": 50,
+        },
     },
     6: {
         "name": "Bayern Munich",
@@ -52,6 +67,9 @@ TEAMS = {
             "بایرن",
             "بایرن مونیخ",
         ],
+        "provider_ids": {
+            "api_football": 157,
+        },
     },
     7: {
         "name": "PSG",
@@ -61,6 +79,9 @@ TEAMS = {
             "پاری سن ژرمن",
             "پی اس جی",
         ],
+        "provider_ids": {
+            "api_football": 85,
+        },
     },
     8: {
         "name": "Inter Milan",
@@ -69,6 +90,9 @@ TEAMS = {
             "inter milan",
             "اینتر",
         ],
+        "provider_ids": {
+            "api_football": 505,
+        },
     },
     9: {
         "name": "AC Milan",
@@ -77,6 +101,9 @@ TEAMS = {
             "ac milan",
             "میلان",
         ],
+        "provider_ids": {
+            "api_football": 489,
+        },
     },
     10: {
         "name": "Juventus",
@@ -85,6 +112,9 @@ TEAMS = {
             "juve",
             "یوونتوس",
         ],
+        "provider_ids": {
+            "api_football": 496,
+        },
     },
     11: {
         "name": "Galatasaray",
@@ -93,6 +123,9 @@ TEAMS = {
             "galata",
             "گالاتاسرای",
         ],
+        "provider_ids": {
+            "api_football": 645,
+        },
     },
     12: {
         "name": "Fenerbahçe",
@@ -101,5 +134,8 @@ TEAMS = {
             "fener",
             "فنرباغچه",
         ],
+        "provider_ids": {
+            "api_football": 611,
+        },
     },
 }

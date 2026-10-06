@@ -1,10 +1,20 @@
 """Football service."""
 
 from data.football_teams import TEAMS
+from services.football_provider_manager import FootballProviderManager
 
 
 class FootballService:
     """Handle football data."""
+
+    def __init__(
+        self,
+        provider_manager: FootballProviderManager | None = None,
+    ) -> None:
+        self.provider_manager = (
+            provider_manager
+            or FootballProviderManager()
+        )
 
     def search_team(
         self,
@@ -58,3 +68,8 @@ class FootballService:
             "name": team_data["name"],
             "country": "",
         }
+
+    def get_live_matches(self) -> list[dict]:
+        """Get live matches from available providers."""
+
+        return self.provider_manager.get_live_matches()
