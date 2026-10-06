@@ -15,7 +15,10 @@ from handlers.router import register_handlers
 from handlers.start_handler import start
 from handlers.football_handler import (
     add_team_callback,
+    remove_team_callback,
+    show_live_scores,
     show_my_teams,
+    start_remove_team,
     start_team_search,
 )
 from services.football_monitor import FootballMonitor
@@ -147,7 +150,31 @@ def main():
             pattern="^add_team_",
         )
     )
+    # Football: live scores
+    application.add_handler(
+        CallbackQueryHandler(
+            show_live_scores,
+            pattern="^live_scores$",
+        )
+    )
 
+    # Football: remove team menu
+    application.add_handler(
+        CallbackQueryHandler(
+            start_remove_team,
+            pattern="^remove_team_menu$",
+        )
+    )
+
+    # Football: remove selected team
+    application.add_handler(
+        CallbackQueryHandler(
+            remove_team_callback,
+            pattern="^remove_team_",
+        )
+    )
+
+    
     # Text router
     register_handlers(application)
 

@@ -177,3 +177,118 @@ async def start_team_search(
         "Juventus\n"
         "تراکتور"
     )
+
+
+async def show_live_scores(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE,
+) -> None:
+    """Show current live football matches."""
+
+    query = update.callback_query
+    await query.answer()
+
+    matches = FootballService().get_live_matches()
+
+    if not matches:
+        await query.edit_message_text(
+            "🔴 در حال حاضر بازی زنده‌ای پیدا نشد."
+        )
+        return
+
+    text = "🔴 بازی‌های زنده:\n\n"
+
+    for match in matches:
+        home = match.get(
+            "home_team",
+            "Unknown",
+        )
+        away = match.get(
+            "away_team",
+            "Unknown",
+        )
+
+        home_score = match.get(
+            "home_score"
+        )
+        away_score = match.get(
+            "away_score"
+        )
+
+        text += (
+            f"⚽ {home} "
+            f"{home_score} - "
+            f"{away_score} "
+            f"{away}\n\n"
+        )
+
+    await query.edit_message_text(text)
+
+
+async def start_remove_team(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE,
+) -> None:
+    """Show teams available for removal."""
+
+    query = update.callback_query
+    await query.answer()
+
+    teams = team_service.get_teams(
+        query.from_user.id
+    )
+
+    if not teams:
+        await query.edit_message_text(
+            "❌ تیمی برای حذف وجود ندارد."
+        )
+        return
+
+    keyboard = []
+
+    for team in teams:
+        keyboard.append(
+            [
+                InlineKeyboardButton(
+                    f"🗑 {team['team_name']}",
+                    callback_data=(
+                        f"remove_team_{team['team_id']}"
+                    ),
+                )
+            ]
+        )
+
+    await query.edit_message_text(
+        "🗑 تیم مورد نظر برای حذف را انتخاب کنید:",
+        reply_markup=InlineKeyboardMarkup(
+            keyboard
+        ),
+    )
+
+
+async def remove_team_callback(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE,
+) -> None:
+    """Remove selected favorite team."""
+
+    query = update.callback_query
+    await query.answer()
+
+    user_id = query.from_user.id
+
+    team_id = int(
+        query.data.replace(
+            "remove_team_",
+            "",
+        )
+    )
+
+    team_service.remove_team(
+        user_id,
+        team_id,
+    )
+
+    await query.edit_message_text(
+        "✅ تیم با موفقیت حذف شد."
+    )
