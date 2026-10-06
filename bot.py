@@ -185,18 +185,10 @@ def main():
     logging.getLogger(__name__).info(
         "Aydin AI Assistant is running..."
     )
-    
-    
-football_scheduler = FootballScheduler(
-        pipeline=FootballNotificationPipeline(
-            monitor=FootballMonitor(
-                provider_manager=FootballProviderManager()
-            )
-        ),
-        router=FootballNotificationRouter(),
-    )
-application.run_polling()
+
+    application.run_polling()
 
 
 if __name__ == "__main__":
+    main()
     main()

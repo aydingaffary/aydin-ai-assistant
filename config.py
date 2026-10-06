@@ -15,3 +15,4 @@ GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 HF_API_KEY = os.getenv("HF_API_KEY")
 
 FOOTBALL_API_KEY = os.getenv("FOOTBALL_API_KEY")
+TMDB_API_KEY = os.getenv("TMDB_API_KEY")

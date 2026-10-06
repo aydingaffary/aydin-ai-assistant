@@ -31,6 +31,7 @@ class IMDbService:
                 timeout=15,
             )
             response.raise_for_status()
+            
 
             soup = BeautifulSoup(response.text, "html.parser")
 
@@ -53,16 +54,23 @@ class IMDbService:
 
         return f"{self.BASE_URL}?region=US"
 
+    
     @staticmethod
     def _headers() -> dict[str, str]:
         return {
             "User-Agent": (
                 "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                "AppleWebKit/537.36 "
-                "Chrome/154.0.0.0 Safari/537.36"
-            )
+                "AppleWebKit/537.36 (KHTML, like Gecko) "
+                "Chrome/154.0 Safari/537.36"
+            ),
+            "Accept": (
+                "text/html,application/xhtml+xml,"
+                "application/xml;q=0.9,image/webp,*/*;q=0.8"
+            ),
+            "Accept-Language": "en-US,en;q=0.9",
+            "Accept-Encoding": "gzip, deflate, br",
+            "Connection": "keep-alive",
         }
-
     def _parse_releases(
         self,
         soup: BeautifulSoup,

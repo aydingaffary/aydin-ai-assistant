@@ -5,7 +5,7 @@ from datetime import date
 from telegram import Update
 from telegram.ext import ContextTypes
 
-from services.imdb_service import IMDbService
+from services.release_service import ReleaseService
 from services.date_service import format_jalali_date
 
 
@@ -15,7 +15,7 @@ async def handle_imdb(
 ) -> None:
     """Show upcoming IMDb releases."""
 
-    service = IMDbService()
+    service = ReleaseService()
 
     releases = service.get_releases(
         start_date=date.today(),
