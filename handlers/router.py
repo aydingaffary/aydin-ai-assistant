@@ -18,6 +18,7 @@ def get_feature_mode(text: str) -> str | None:
         "📰 اخبار": "news",
         "⚽ نتایج فوتبال": "football",
         "⛅ آب‌وهوا": "weather",
+        "🎬 فیلم و سریال": "imdb",
     }
 
     return features.get(text)
@@ -63,6 +64,11 @@ async def handle_message(
                 "🧠 لطفاً درخواست خود را ارسال کنید."
             )
             return
+        if mode == "imdb":
+            from handlers.imdb_handler import handle_imdb
+
+            await handle_imdb(update, context)
+            return
 
         if mode == "currency":
             from handlers.market_handler import handle_market
@@ -74,6 +80,11 @@ async def handle_message(
             from handlers.football_handler import handle_football
 
             await handle_football(update, context)
+            return
+        if mode == "imdb":
+            from handlers.imdb_handler import handle_imdb
+
+            await handle_imdb(update, context)
             return
 
     mode = context.user_data.get("mode")
