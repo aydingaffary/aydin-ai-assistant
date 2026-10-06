@@ -1,9 +1,14 @@
 """AI providers router."""
-from providers.huggingface import HuggingFaceProvider
+
+import logging
 from concurrent.futures import ThreadPoolExecutor, TimeoutError
 
 from providers.gemini import GeminiProvider
 from providers.groq import GroqProvider
+from providers.huggingface import HuggingFaceProvider
+
+
+logger = logging.getLogger(__name__)
 
 
 class AIRouter:
@@ -11,7 +16,7 @@ class AIRouter:
 
     TIMEOUT = 10
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.providers = []
 
         for provider_class in [
@@ -23,9 +28,9 @@ class AIRouter:
                 self.providers.append(provider_class())
 
             except Exception as error:
-                print(
+                logger.warning(
+                    "%s disabled: %s",
                     provider_class.__name__,
-                    "disabled:",
                     error,
                 )
 
@@ -33,10 +38,12 @@ class AIRouter:
         """Try providers with timeout."""
 
         for provider in self.providers:
+            provider_name = provider.__class__.__name__
+
             try:
-                print(
-                    "Trying:",
-                    provider.__class__.__name__,
+                logger.info(
+                    "Trying provider: %s",
+                    provider_name,
                 )
 
                 with ThreadPoolExecutor(max_workers=1) as executor:
@@ -45,25 +52,28 @@ class AIRouter:
                         prompt,
                     )
 
-                    response = future.result(timeout=self.TIMEOUT)
+                    response = future.result(
+                        timeout=self.TIMEOUT,
+                    )
 
-                print(
-                    "Success:",
-                    provider.__class__.__name__,
+                logger.info(
+                    "Provider succeeded: %s",
+                    provider_name,
                 )
 
                 return response
 
             except TimeoutError:
-                print(
-                    provider.__class__.__name__,
-                    "timeout after 10 seconds",
+                logger.warning(
+                    "%s timed out after %s seconds",
+                    provider_name,
+                    self.TIMEOUT,
                 )
 
             except Exception as error:
-                print(
-                    provider.__class__.__name__,
-                    "failed:",
+                logger.warning(
+                    "%s failed: %s",
+                    provider_name,
                     error,
                 )
 

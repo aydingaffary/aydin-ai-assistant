@@ -1,7 +1,8 @@
 """Football API service."""
 
-import os
 import requests
+
+from config import FOOTBALL_API_KEY
 
 
 class FootballAPIService:
@@ -9,8 +10,11 @@ class FootballAPIService:
 
     BASE_URL = "https://v3.football.api-sports.io"
 
-    def __init__(self):
-        self.api_key = os.getenv("FOOTBALL_API_KEY")
+    def __init__(self) -> None:
+        self.api_key = FOOTBALL_API_KEY
+
+        if not self.api_key:
+            raise ValueError("FOOTBALL_API_KEY is not set.")
 
         self.headers = {
             "x-apisports-key": self.api_key,

@@ -1,11 +1,12 @@
 """Telegram bot handlers router."""
-
+import logging
 from telegram import Update
 from telegram.ext import (
     ContextTypes,
     MessageHandler,
     filters,
 )
+logger = logging.getLogger(__name__)
 
 
 def get_feature_mode(text: str) -> str | None:
@@ -30,7 +31,7 @@ async def handle_message(
 
     text = update.message.text
 
-    print("ROUTER:", text)
+    logger.info("Router received message: %s", text)
 
     if text == "↩️ منوی اصلی":
         context.user_data.pop("mode", None)
@@ -77,7 +78,7 @@ async def handle_message(
 
     mode = context.user_data.get("mode")
 
-    print("CURRENT MODE:", mode)
+    logger.info("Current mode: %s", mode)
 
     if mode == "weather":
         from handlers.weather_handler import handle_weather

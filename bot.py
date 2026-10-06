@@ -1,6 +1,8 @@
-import os
 
-from dotenv import load_dotenv
+import logging
+
+from logging_config import setup_logging
+
 from telegram.ext import (
     ApplicationBuilder,
     CommandHandler,
@@ -17,9 +19,7 @@ from handlers.football_handler import (
     start_team_search,
 )
 
-load_dotenv()
-
-BOT_TOKEN = os.getenv("BOT_TOKEN")
+from config import BOT_TOKEN
 
 
 async def cancel(update, context):
@@ -36,15 +36,14 @@ async def cancel(update, context):
 async def error_handler(update, context):
     """Handle unexpected errors."""
 
-    import traceback
-
-    print("BOT ERROR:")
-    traceback.print_exc()
-
+    logging.getLogger(__name__).exception(
+        "Bot error",
+        exc_info=context.error,
+    )
 
 def main():
     """Start the Telegram bot."""
-
+    setup_logging()
     init_database()
 
     if not BOT_TOKEN:
@@ -110,7 +109,7 @@ def main():
         error_handler
     )
 
-    print(
+    logging.getLogger(__name__).info(
         "Aydin AI Assistant is running..."
     )
 

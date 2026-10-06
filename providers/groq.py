@@ -1,24 +1,19 @@
 """Groq AI provider."""
 
-import os
-
-from dotenv import load_dotenv
 from groq import Groq
 
-load_dotenv()
+from config import GROQ_API_KEY
 
 
 class GroqProvider:
     """Handle requests to Groq API."""
 
-    def __init__(self):
-        api_key = os.getenv("GROQ_API_KEY")
-
+    def __init__(self) -> None:
         self.client = None
 
-        if api_key:
+        if GROQ_API_KEY:
             self.client = Groq(
-                api_key=api_key,
+                api_key=GROQ_API_KEY,
             )
 
     def generate_response(self, prompt: str) -> str:

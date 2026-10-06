@@ -1,21 +1,20 @@
-import os
+"""Hugging Face AI provider."""
 
-from dotenv import load_dotenv
 from huggingface_hub import InferenceClient
 
-load_dotenv()
+from config import HF_API_KEY
 
 
 class HuggingFaceProvider:
     """Handle Hugging Face AI requests."""
 
-    def __init__(self):
-        api_key = os.getenv("HF_API_KEY")
-
-        if not api_key:
+    def __init__(self) -> None:
+        if not HF_API_KEY:
             raise ValueError("HF_API_KEY is not set.")
 
-        self.client = InferenceClient(api_key=api_key)
+        self.client = InferenceClient(
+            api_key=HF_API_KEY,
+        )
 
     def generate_response(
         self,

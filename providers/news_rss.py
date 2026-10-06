@@ -1,8 +1,8 @@
 """RSS news provider."""
 
 import feedparser
-
-
+import logging
+logger = logging.getLogger(__name__)
 class RSSNewsProvider:
     """Fetch news from multiple RSS feeds."""
 
@@ -46,6 +46,10 @@ class RSSNewsProvider:
                     )
 
             except Exception as error:
-                print(f"News source failed ({name}): {error}")
+                logger.warning(
+                    "News source failed (%s): %s",
+                    name,
+                    error,
+                )
 
         return news
