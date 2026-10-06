@@ -18,7 +18,19 @@ from handlers.football_handler import (
     show_my_teams,
     start_team_search,
 )
-
+from services.football_monitor import FootballMonitor
+from services.football_notification_pipeline import (
+    FootballNotificationPipeline,
+)
+from services.football_notification_router import (
+    FootballNotificationRouter,
+)
+from services.football_provider_manager import (
+    FootballProviderManager,
+)
+from services.football_scheduler import (
+    FootballScheduler,
+)
 from config import BOT_TOKEN
 
 
@@ -40,6 +52,38 @@ async def error_handler(update, context):
         "Bot error",
         exc_info=context.error,
     )
+async def post_init(application):
+    """Start background services."""
+
+    football_scheduler = FootballScheduler(
+        pipeline=FootballNotificationPipeline(
+            monitor=FootballMonitor(
+                provider_manager=FootballProviderManager()
+            )
+        ),
+        router=FootballNotificationRouter(),
+    )
+
+    application.bot_data["football_scheduler"] = (
+        football_scheduler
+    )
+
+    await football_scheduler.start(
+        application
+    )
+
+
+async def post_shutdown(application):
+    """Stop background services."""
+
+    football_scheduler = (
+        application.bot_data.get(
+            "football_scheduler"
+        )
+    )
+
+    if football_scheduler is not None:
+        await football_scheduler.stop()
 
 def main():
     """Start the Telegram bot."""
@@ -52,6 +96,8 @@ def main():
     application = (
         ApplicationBuilder()
         .token(BOT_TOKEN)
+        .post_init(post_init)
+        .post_shutdown(post_shutdown)
         .build()
     )
 
@@ -112,8 +158,17 @@ def main():
     logging.getLogger(__name__).info(
         "Aydin AI Assistant is running..."
     )
-
-    application.run_polling()
+    
+    
+football_scheduler = FootballScheduler(
+        pipeline=FootballNotificationPipeline(
+            monitor=FootballMonitor(
+                provider_manager=FootballProviderManager()
+            )
+        ),
+        router=FootballNotificationRouter(),
+    )
+application.run_polling()
 
 
 if __name__ == "__main__":
