@@ -1,13 +1,17 @@
 """Telegram bot handlers router."""
 
 import logging
-from handlers.cooking_handler import cooking
-from telegram import Update
+
+from telegram import ReplyKeyboardMarkup, Update
 from telegram.ext import (
     ContextTypes,
     MessageHandler,
     filters,
 )
+
+from handlers.cooking_handler import cooking
+from handlers.imdb_handler import handle_movie_search
+
 
 logger = logging.getLogger(__name__)
 
@@ -21,11 +25,39 @@ def get_feature_mode(text: str) -> str | None:
         "📰 اخبار": "news",
         "⚽ نتایج فوتبال": "football",
         "⛅ آب‌وهوا": "weather",
-        "🎬 فیلم و سریال": "imdb",
+
+        "🎬 فیلم و سریال": "movie",
+        "🔎 جستجوی فیلم": "imdb_search",
+        "🎬 اکران‌های پیش رو": "upcoming_movies",
+        "📺 سریال‌های پیش رو": "upcoming_tv",
+
         "🍳 آشپزی": "cooking",
     }
 
     return features.get(text)
+
+
+async def handle_movie_menu(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE,
+) -> None:
+    """Show movie submenu."""
+
+    keyboard = [
+        ["🔎 جستجوی فیلم"],
+        ["🎬 اکران‌های پیش رو"],
+        ["📺 سریال‌های پیش رو"],
+        ["↩️ منوی اصلی"],
+    ]
+
+    await update.message.reply_text(
+        "🎬 فیلم و سریال\n\n"
+        "یک گزینه را انتخاب کنید:",
+        reply_markup=ReplyKeyboardMarkup(
+            keyboard,
+            resize_keyboard=True,
+        ),
+    )
 
 
 async def handle_message(
@@ -39,7 +71,12 @@ async def handle_message(
     logger.info("Router received message: %s", text)
 
     if text == "↩️ منوی اصلی":
-        context.user_data.pop("mode", None)
+        context.user_data.clear()
+        return
+
+    # دریافت نام فیلم برای جستجو
+    if context.user_data.get("waiting_movie"):
+        await handle_movie_search(update, context)
         return
 
     mode = get_feature_mode(text)
@@ -47,27 +84,46 @@ async def handle_message(
     if mode:
         context.user_data["mode"] = mode
 
+        if mode == "movie":
+            await handle_movie_menu(update, context)
+            return
+
+        if mode == "imdb_search":
+            context.user_data["waiting_movie"] = True
+
+            await update.message.reply_text(
+                "🔎 نام فیلم یا سریال را وارد کنید."
+            )
+            return
+
+        if mode == "upcoming_movies":
+            from handlers.upcoming_handler import handle_upcoming
+
+            await handle_upcoming(update, context)
+            return
+
+        if mode == "upcoming_tv":
+            from handlers.tv_upcoming_handler import handle_tv_upcoming
+
+            await handle_tv_upcoming(update, context)
+            return
+
         if mode == "weather":
-            await update.message.reply_text("⛅ لطفاً نام شهر خود را وارد کنید.")
+            await update.message.reply_text(
+                "⛅ لطفاً نام شهر خود را وارد کنید."
+            )
             return
 
         if mode == "news":
             await update.message.reply_text(
-                "📰 لطفاً موضوع یا کشور مورد نظر خود را وارد کنید.\n\n"
-                "مثال:\n"
-                "ایران\n"
-                "هوش مصنوعی\n"
-                "اقتصاد"
+                "📰 لطفاً موضوع یا کشور مورد نظر خود را وارد کنید."
             )
             return
 
         if mode == "smart_assistant":
-            await update.message.reply_text("🧠 لطفاً درخواست خود را ارسال کنید.")
-            return
-        if mode == "imdb":
-            from handlers.imdb_handler import handle_imdb
-
-            await handle_imdb(update, context)
+            await update.message.reply_text(
+                "🧠 لطفاً درخواست خود را ارسال کنید."
+            )
             return
 
         if mode == "currency":
@@ -81,21 +137,13 @@ async def handle_message(
 
             await handle_football(update, context)
             return
-        elif text == "🍳 آشپزی":
+
+        if mode == "cooking":
             await cooking(update, context)
-
-        elif text == "🔄 پیشنهاد بعدی":
-            await next_recipe(update, context)
-
-        if mode == "imdb":
-            from handlers.imdb_handler import handle_imdb
-
-            await handle_imdb(update, context)
             return
 
-    mode = context.user_data.get("mode")
 
-    logger.info("Current mode: %s", mode)
+    mode = context.user_data.get("mode")
 
     if mode == "weather":
         from handlers.weather_handler import handle_weather
@@ -116,12 +164,6 @@ async def handle_message(
         return
 
     if mode == "football":
-        from handlers.football_handler import handle_team_search
-
-        await handle_team_search(update, context)
-        return
-
-    if mode == "football_search":
         from handlers.football_handler import handle_team_search
 
         await handle_team_search(update, context)
