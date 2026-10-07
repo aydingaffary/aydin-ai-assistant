@@ -14,25 +14,24 @@ class MessageService:
     ) -> None:
         """Save a message."""
 
-        connection = get_connection()
-        cursor = connection.cursor()
+        with get_connection() as connection:
 
-        cursor.execute(
-            """
-            INSERT INTO messages
-            (user_id, role, content, created_at)
-            VALUES (?, ?, ?, ?)
-            """,
-            (
-                user_id,
-                role,
-                content,
-                datetime.now().isoformat(),
-            ),
-        )
+            cursor = connection.cursor()
 
-        connection.commit()
-        connection.close()
+            cursor.execute(
+                """
+                INSERT INTO messages
+                (user_id, role, content, created_at)
+                VALUES (?, ?, ?, ?)
+                """,
+                (
+                    user_id,
+                    role,
+                    content,
+                    datetime.now().isoformat(),
+                ),
+            )
+
 
     def get_messages(
         self,
@@ -40,21 +39,20 @@ class MessageService:
     ) -> list[tuple]:
         """Get user messages."""
 
-        connection = get_connection()
-        cursor = connection.cursor()
+        with get_connection() as connection:
 
-        cursor.execute(
-            """
-            SELECT role, content, created_at
-            FROM messages
-            WHERE user_id = ?
-            ORDER BY id
-            """,
-            (user_id,),
-        )
+            cursor = connection.cursor()
 
-        messages = cursor.fetchall()
+            cursor.execute(
+                """
+                SELECT role, content, created_at
+                FROM messages
+                WHERE user_id = ?
+                ORDER BY id
+                """,
+                (user_id,),
+            )
 
-        connection.close()
+            messages = cursor.fetchall()
 
         return messages

@@ -13,14 +13,14 @@ logger = logging.getLogger(__name__)
 class AIRouter:
     """Route AI requests to available providers."""
 
-    TIMEOUT = 10
+    TIMEOUT = 5
 
     def __init__(self) -> None:
         self.providers = []
 
         for provider_class in [
-            GeminiProvider,
             GroqProvider,
+            GeminiProvider,
             HuggingFaceProvider,
         ]:
             try:
@@ -70,10 +70,9 @@ class AIRouter:
                 )
 
             except Exception as error:
-                logger.warning(
-                    "%s failed: %s",
+                logger.exception(
+                    "%s failed",
                     provider_name,
-                    error,
                 )
 
         return "❌ هیچ سرویس هوش مصنوعی در دسترس نیست."

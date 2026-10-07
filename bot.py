@@ -4,6 +4,7 @@ from handlers.challenge_handler import (
     check_answer,
     next_challenge,
 )
+from handlers.admin_handler import admin_panel
 from logging_config import setup_logging
 from services.reminder_job import check_reminders
 from telegram.ext import (
@@ -11,7 +12,13 @@ from telegram.ext import (
     CommandHandler,
     CallbackQueryHandler,
 )
-
+from handlers.admin_handler import (
+    admin_panel,
+    users_list,
+    today_users,
+    premium_users,
+    stats,
+)
 from handlers.challenge_handler import check_answer
 from handlers.cooking_handler import (
     cooking,
@@ -225,8 +232,47 @@ def main():
             pattern="^next_recipe$"
         )
     )   
+    application.add_handler(
+        CommandHandler(
+            "admin",
+            admin_panel,
+        )
+    )
+    application.add_handler(
+    CommandHandler(
+        "admin",
+        admin_panel,
+    )
+)
 
-    
+    application.add_handler(
+        CommandHandler(
+            "users",
+            users_list,
+        )
+    )
+
+    application.add_handler(
+        CommandHandler(
+            "today",
+            today_users,
+        )
+    )
+
+    application.add_handler(
+        CommandHandler(
+            "premium",
+            premium_users,
+        )
+    )
+
+    application.add_handler(
+        CommandHandler(
+            "stats",
+            stats,
+        )
+    )
+            
     # Text router
     register_handlers(application)
 

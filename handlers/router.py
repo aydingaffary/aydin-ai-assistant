@@ -2,6 +2,11 @@
 
 import logging
 
+from services.activity_service import ActivityService
+
+
+
+activity_service = ActivityService()
 from telegram import ReplyKeyboardMarkup, Update
 from telegram.ext import (
     ContextTypes,
@@ -180,22 +185,46 @@ async def handle_message(
 
         if mode == "challenge":
 
+            activity_service.log_activity(
+                update.effective_user.id,
+                "challenge",
+            )
+
             from handlers.challenge_handler import challenge_menu
 
             await challenge_menu(
                 update,
-                context
+                context,
             )
 
             return
 
+        if mode == "challenge_rank":
 
+            activity_service.log_activity(
+                update.effective_user.id,
+                "challenge_rank",
+            )
+
+            from handlers.challenge_handler import show_rank
+
+            await show_rank(
+                update,
+                context,
+            )
+
+            return
 
         if mode == "movie":
 
+            activity_service.log_activity(
+                update.effective_user.id,
+                "movie",
+            )
+
             await handle_movie_menu(
                 update,
-                context
+                context,
             )
 
             return
@@ -284,11 +313,16 @@ async def handle_message(
 
         if mode == "currency":
 
+            activity_service.log_activity(
+                update.effective_user.id,
+                "currency",
+            )
+
             from handlers.market_handler import handle_market
 
             await handle_market(
                 update,
-                context
+                context,
             )
 
             return
@@ -297,11 +331,16 @@ async def handle_message(
 
         if mode == "football":
 
+            activity_service.log_activity(
+                update.effective_user.id,
+                "football",
+            )
+
             from handlers.football_handler import handle_football
 
             await handle_football(
                 update,
-                context
+                context,
             )
 
             return
@@ -328,40 +367,44 @@ async def handle_message(
 
     if mode == "weather":
 
-        from handlers.weather_handler import handle_weather
+            activity_service.log_activity(
+                update.effective_user.id,
+                "weather",
+            )
 
-        await handle_weather(
-            update,
-            context
-        )
+            await update.message.reply_text(
+                "⛅ لطفاً نام شهر خود را وارد کنید."
+            )
 
-        return
+            return
 
 
 
     if mode == "news":
 
-        from handlers.news_handler import handle_news
+            activity_service.log_activity(
+                update.effective_user.id,
+                "news",
+            )
 
-        await handle_news(
-            update,
-            context
-        )
+            await update.message.reply_text(
+                "📰 لطفاً موضوع مورد نظر را وارد کنید."
+            )
 
-        return
+            return
 
 
 
     if mode == "smart_assistant":
 
-        from handlers.ai_handler import handle_ai
+            from handlers.ai_handler import handle_ai
 
-        await handle_ai(
-            update,
-            context
-        )
+            await handle_ai(
+                update,
+                context,
+            )
 
-        return
+            return
 
 
 

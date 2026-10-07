@@ -14,6 +14,7 @@ async def handle_ai(
     update: Update,
     context: ContextTypes.DEFAULT_TYPE,
 ) -> None:
+    print("🔥 AI HANDLER CALLED")
     """Handle AI assistant requests."""
 
     user_id = update.effective_user.id

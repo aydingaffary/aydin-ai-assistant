@@ -15,97 +15,45 @@ class UserLimitManager:
 
         today = date.today().isoformat()
 
-        connection = get_connection()
-        cursor = connection.cursor()
+        with get_connection() as connection:
 
-        cursor.execute(
-            """
-            SELECT is_premium
-            FROM users
-            WHERE user_id = ?
-            """,
-            (user_id,),
-        )
+            cursor = connection.cursor()
 
-        user = cursor.fetchone()
-
-        if not user:
             cursor.execute(
                 """
-                INSERT INTO users
-                (user_id, username, is_premium, created_at)
-                VALUES (?, ?, ?, ?)
+                SELECT is_premium
+                FROM users
+                WHERE user_id = ?
                 """,
-                (
-                    user_id,
-                    "",
-                    0,
-                    today,
-                ),
+                (user_id,),
             )
 
-            connection.commit()
-            connection.close()
-            return True
+            user = cursor.fetchone()
 
-        if user[0]:
-            connection.close()
-            return True
+            if not user:
+                cursor.execute(
+                    """
+                    INSERT INTO users
+                    (user_id, username, is_premium, created_at)
+                    VALUES (?, ?, ?, ?)
+                    """,
+                    (
+                        user_id,
+                        "",
+                        0,
+                        today,
+                    ),
+                )
 
-        cursor.execute(
-            """
-            SELECT count
-            FROM ai_usage
-            WHERE user_id = ?
-            AND feature = ?
-            AND usage_date = ?
-            """,
-            (
-                user_id,
-                "smart_assistant",
-                today,
-            ),
-        )
+                return True
 
-        usage = cursor.fetchone()
+            if user[0]:
+                return True
 
-        connection.close()
-
-        if not usage:
-            return True
-
-        return usage[0] < self.FREE_LIMIT
-
-    def record_request(self, user_id: int) -> None:
-        """Record AI request."""
-
-        today = date.today().isoformat()
-
-        connection = get_connection()
-        cursor = connection.cursor()
-
-        cursor.execute(
-            """
-            SELECT count
-            FROM ai_usage
-            WHERE user_id = ?
-            AND feature = ?
-            AND usage_date = ?
-            """,
-            (
-                user_id,
-                "smart_assistant",
-                today,
-            ),
-        )
-
-        usage = cursor.fetchone()
-
-        if usage:
             cursor.execute(
                 """
-                UPDATE ai_usage
-                SET count = count + 1
+                SELECT count
+                FROM ai_usage
                 WHERE user_id = ?
                 AND feature = ?
                 AND usage_date = ?
@@ -116,84 +64,130 @@ class UserLimitManager:
                     today,
                 ),
             )
-        else:
+
+            usage = cursor.fetchone()
+
+        if not usage:
+            return True
+
+        return usage[0] < self.FREE_LIMIT
+
+
+    def record_request(self, user_id: int) -> None:
+        """Record AI request."""
+
+        today = date.today().isoformat()
+
+        with get_connection() as connection:
+
+            cursor = connection.cursor()
+
             cursor.execute(
                 """
-                INSERT INTO ai_usage
-                (user_id, feature, usage_date, count)
-                VALUES (?, ?, ?, ?)
+                SELECT count
+                FROM ai_usage
+                WHERE user_id = ?
+                AND feature = ?
+                AND usage_date = ?
                 """,
                 (
                     user_id,
                     "smart_assistant",
                     today,
-                    1,
                 ),
             )
 
-        connection.commit()
-        connection.close()
+            usage = cursor.fetchone()
+
+            if usage:
+                cursor.execute(
+                    """
+                    UPDATE ai_usage
+                    SET count = count + 1
+                    WHERE user_id = ?
+                    AND feature = ?
+                    AND usage_date = ?
+                    """,
+                    (
+                        user_id,
+                        "smart_assistant",
+                        today,
+                    ),
+                )
+
+            else:
+                cursor.execute(
+                    """
+                    INSERT INTO ai_usage
+                    (user_id, feature, usage_date, count)
+                    VALUES (?, ?, ?, ?)
+                    """,
+                    (
+                        user_id,
+                        "smart_assistant",
+                        today,
+                        1,
+                    ),
+                )
+
 
     def remaining_requests(self, user_id: int) -> int:
         """Return remaining requests."""
 
         today = date.today().isoformat()
 
-        connection = get_connection()
-        cursor = connection.cursor()
+        with get_connection() as connection:
 
-        cursor.execute(
-            """
-            SELECT is_premium
-            FROM users
-            WHERE user_id = ?
-            """,
-            (user_id,),
-        )
+            cursor = connection.cursor()
 
-        user = cursor.fetchone()
+            cursor.execute(
+                """
+                SELECT is_premium
+                FROM users
+                WHERE user_id = ?
+                """,
+                (user_id,),
+            )
 
-        if user and user[0]:
-            connection.close()
-            return -1
+            user = cursor.fetchone()
 
-        cursor.execute(
-            """
-            SELECT count
-            FROM ai_usage
-            WHERE user_id = ?
-            AND feature = ?
-            AND usage_date = ?
-            """,
-            (
-                user_id,
-                "smart_assistant",
-                today,
-            ),
-        )
+            if user and user[0]:
+                return -1
 
-        usage = cursor.fetchone()
+            cursor.execute(
+                """
+                SELECT count
+                FROM ai_usage
+                WHERE user_id = ?
+                AND feature = ?
+                AND usage_date = ?
+                """,
+                (
+                    user_id,
+                    "smart_assistant",
+                    today,
+                ),
+            )
 
-        connection.close()
+            usage = cursor.fetchone()
 
         count = usage[0] if usage else 0
 
         return max(0, self.FREE_LIMIT - count)
 
+
     def set_premium(self, user_id: int) -> None:
         """Upgrade user."""
 
-        connection = get_connection()
-        cursor = connection.cursor()
+        with get_connection() as connection:
 
-        cursor.execute(
-            """
-            UPDATE users
-            SET is_premium = 1
-            WHERE user_id = ?
-            """,
-            (user_id,),
-        )
+            cursor = connection.cursor()
 
-        connection.commit()
-        connection.close()
+            cursor.execute(
+                """
+                UPDATE users
+                SET is_premium = 1
+                WHERE user_id = ?
+                """,
+                (user_id,),
+            )
