@@ -33,7 +33,6 @@ class ActivityService:
                 ),
             )
 
-
     def get_user_activity(
         self,
         user_id: int,
@@ -56,21 +55,18 @@ class ActivityService:
 
             return cursor.fetchall()
 
-
     def get_feature_stats(self):
         """Return usage count by feature."""
 
         with get_connection() as connection:
 
-            cursor = connection.execute(
-                """
+            cursor = connection.execute("""
                 SELECT
                     feature,
                     COUNT(*)
                 FROM user_activity
                 GROUP BY feature
                 ORDER BY COUNT(*) DESC
-                """
-            )
+                """)
 
             return cursor.fetchall()

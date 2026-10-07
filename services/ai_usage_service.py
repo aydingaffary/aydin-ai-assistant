@@ -51,7 +51,6 @@ class AIUsageService:
 
         return result[0] < self.LIMITS.get(feature, 0)
 
-
     def consume_ai(
         self,
         user_id: int,
@@ -104,7 +103,6 @@ class AIUsageService:
                     """,
                     (user_id, feature, today),
                 )
-
 
     def remaining(
         self,

@@ -37,9 +37,7 @@ def init_database() -> None:
 
     with get_connection() as connection:
 
-        connection.execute(
-            "PRAGMA journal_mode = WAL"
-        )
+        connection.execute("PRAGMA journal_mode = WAL")
 
         connection.execute("""
             CREATE TABLE IF NOT EXISTS users (
@@ -55,6 +53,18 @@ def init_database() -> None:
                 user_id INTEGER NOT NULL,
                 content TEXT NOT NULL,
                 status TEXT NOT NULL DEFAULT 'allowed',
+                created_at TEXT NOT NULL,
+                FOREIGN KEY(user_id)
+                REFERENCES users(user_id)
+            )
+        """)
+        connection.execute("""
+            CREATE TABLE IF NOT EXISTS ai_requests (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL,
+                prompt_length INTEGER NOT NULL,
+                response_length INTEGER NOT NULL,
+                provider TEXT,
                 created_at TEXT NOT NULL,
                 FOREIGN KEY(user_id)
                 REFERENCES users(user_id)

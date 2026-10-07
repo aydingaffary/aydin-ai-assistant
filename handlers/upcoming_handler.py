@@ -34,16 +34,11 @@ async def handle_upcoming(
         release_date = movie.get("date")
 
         if release_date:
-            jalali_date = format_jalali_date(
-                date.fromisoformat(release_date)
-            )
+            jalali_date = format_jalali_date(date.fromisoformat(release_date))
         else:
             jalali_date = "-"
 
-        text += (
-            f"🎥 {index}. {movie['title']}\n"
-            f"📅 تاریخ اکران: {jalali_date}\n"
-        )
+        text += f"🎥 {index}. {movie['title']}\n" f"📅 تاریخ اکران: {jalali_date}\n"
 
         if movie.get("rating"):
             text += f"⭐ امتیاز: {movie['rating']}\n"
@@ -55,6 +50,4 @@ async def handle_upcoming(
         text += "─" * 20
         text += "\n\n"
 
-    await update.message.reply_text(
-        text
-    )
+    await update.message.reply_text(text)

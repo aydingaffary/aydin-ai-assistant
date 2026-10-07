@@ -72,7 +72,6 @@ class UserLimitManager:
 
         return usage[0] < self.FREE_LIMIT
 
-
     def record_request(self, user_id: int) -> None:
         """Record AI request."""
 
@@ -130,7 +129,6 @@ class UserLimitManager:
                     ),
                 )
 
-
     def remaining_requests(self, user_id: int) -> int:
         """Return remaining requests."""
 
@@ -174,7 +172,6 @@ class UserLimitManager:
         count = usage[0] if usage else 0
 
         return max(0, self.FREE_LIMIT - count)
-
 
     def set_premium(self, user_id: int) -> None:
         """Upgrade user."""

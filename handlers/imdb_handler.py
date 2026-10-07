@@ -14,9 +14,7 @@ async def handle_imdb(
 
     context.user_data["waiting_movie"] = True
 
-    await update.message.reply_text(
-        "🎬 نام فیلم یا سریال را وارد کنید:"
-    )
+    await update.message.reply_text("🎬 نام فیلم یا سریال را وارد کنید:")
 
 
 async def handle_movie_search(
@@ -34,9 +32,7 @@ async def handle_movie_search(
     context.user_data["waiting_movie"] = False
 
     if not movie:
-        await update.message.reply_text(
-            "❌ فیلم پیدا نشد."
-        )
+        await update.message.reply_text("❌ فیلم پیدا نشد.")
         return
 
     text = (

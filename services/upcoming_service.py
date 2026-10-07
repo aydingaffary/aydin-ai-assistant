@@ -58,9 +58,7 @@ class UpcomingService:
                 }
             )
 
-        items.sort(
-            key=lambda x: x["date"]
-        )
+        items.sort(key=lambda x: x["date"])
 
         return items
 

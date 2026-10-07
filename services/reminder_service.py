@@ -3,7 +3,6 @@
 import json
 from pathlib import Path
 
-
 FILE_PATH = Path("data/reminders.json")
 
 
@@ -23,13 +22,10 @@ class ReminderService:
         ) as file:
             return json.load(file)
 
-
     def save(self, reminders):
         """Save reminders."""
 
-        FILE_PATH.parent.mkdir(
-            exist_ok=True
-        )
+        FILE_PATH.parent.mkdir(exist_ok=True)
 
         with open(
             FILE_PATH,
@@ -42,7 +38,6 @@ class ReminderService:
                 ensure_ascii=False,
                 indent=2,
             )
-
 
     def add(
         self,

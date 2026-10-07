@@ -1,10 +1,27 @@
-
 import logging
+from handlers.admin_handler import ai_requests
 from handlers.challenge_handler import (
     check_answer,
     next_challenge,
 )
-from handlers.admin_handler import admin_panel
+from handlers.admin_handler import ai_performance
+from handlers.admin_handler import ai_stats
+from handlers.admin_handler import (
+    admin_panel,
+    users_list,
+    today_users,
+    premium_users,
+    stats,
+    ai_logs,
+    blocked_requests,
+    ai_stats,
+    banned_users,
+    ban_user,
+    unban_user,
+    blocked_attempts,
+)
+
+
 from logging_config import setup_logging
 from services.reminder_job import check_reminders
 from telegram.ext import (
@@ -49,6 +66,10 @@ from services.football_provider_manager import (
 from services.football_scheduler import (
     FootballScheduler,
 )
+from handlers.admin_handler import (
+    ban_user,
+    unban_user,
+)
 from config import BOT_TOKEN
 
 
@@ -70,38 +91,31 @@ async def error_handler(update, context):
         "Bot error",
         exc_info=context.error,
     )
+
+
 async def post_init(application):
     """Start background services."""
 
     football_scheduler = FootballScheduler(
         pipeline=FootballNotificationPipeline(
-            monitor=FootballMonitor(
-                provider_manager=FootballProviderManager()
-            )
+            monitor=FootballMonitor(provider_manager=FootballProviderManager())
         ),
         router=FootballNotificationRouter(),
     )
 
-    application.bot_data["football_scheduler"] = (
-        football_scheduler
-    )
+    application.bot_data["football_scheduler"] = football_scheduler
 
-    await football_scheduler.start(
-        application
-    )
+    await football_scheduler.start(application)
 
 
 async def post_shutdown(application):
     """Stop background services."""
 
-    football_scheduler = (
-        application.bot_data.get(
-            "football_scheduler"
-        )
-    )
+    football_scheduler = application.bot_data.get("football_scheduler")
 
     if football_scheduler is not None:
         await football_scheduler.stop()
+
 
 def main():
     """Start the Telegram bot."""
@@ -117,7 +131,6 @@ def main():
         .post_init(post_init)
         .post_shutdown(post_shutdown)
         .build()
-        
     )
     if application.job_queue:
         application.job_queue.run_repeating(
@@ -125,7 +138,6 @@ def main():
             interval=30,
             first=10,
         )
-
 
     # Commands
     application.add_handler(
@@ -149,7 +161,6 @@ def main():
         )
     )
 
-
     application.add_handler(
         CallbackQueryHandler(
             next_recipe,
@@ -171,7 +182,6 @@ def main():
             pattern="^news_more$",
         )
     )
-    
 
     # Football: show user's teams
     application.add_handler(
@@ -218,6 +228,19 @@ def main():
         )
     )
 
+    application.add_handler(CommandHandler("banned", banned_users))
+
+    application.add_handler(CommandHandler("banned", banned_users))
+
+    application.add_handler(CommandHandler("ban_user", ban_user))
+
+    application.add_handler(CommandHandler("unban_user", unban_user))
+    application.add_handler(
+        CommandHandler(
+            "ai_stats",
+            ai_stats,
+        )
+    )
 
     # Football: remove selected team
     application.add_handler(
@@ -226,12 +249,7 @@ def main():
             pattern="^remove_team_",
         )
     )
-    application.add_handler(
-        CallbackQueryHandler(
-            next_recipe,
-            pattern="^next_recipe$"
-        )
-    )   
+    application.add_handler(CallbackQueryHandler(next_recipe, pattern="^next_recipe$"))
     application.add_handler(
         CommandHandler(
             "admin",
@@ -239,11 +257,11 @@ def main():
         )
     )
     application.add_handler(
-    CommandHandler(
-        "admin",
-        admin_panel,
+        CommandHandler(
+            "admin",
+            admin_panel,
+        )
     )
-)
 
     application.add_handler(
         CommandHandler(
@@ -272,17 +290,43 @@ def main():
             stats,
         )
     )
-            
+
+    application.add_handler(CommandHandler("ai_logs", ai_logs))
+
+    application.add_handler(CommandHandler("blocked", blocked_requests))
+
+    application.add_handler(CommandHandler("ai_stats", ai_stats))
+
+    application.add_handler(
+        CommandHandler(
+            "ai_requests",
+            ai_requests,
+        )
+    )
+    application.add_handler(CommandHandler("ban_user", ban_user))
+
+    application.add_handler(CommandHandler("unban_user", unban_user))
+
+    application.add_handler(
+        CommandHandler(
+            "blocked_attempts",
+            blocked_attempts,
+        )
+    )
+
+    application.add_handler(
+        CommandHandler(
+            "ai_performance",
+            ai_performance,
+        )
+    )
+
     # Text router
     register_handlers(application)
 
-    application.add_error_handler(
-        error_handler
-    )
+    application.add_error_handler(error_handler)
 
-    logging.getLogger(__name__).info(
-        "Aydin AI Assistant is running..."
-    )
+    logging.getLogger(__name__).info("Aydin AI Assistant is running...")
 
     application.run_polling()
 

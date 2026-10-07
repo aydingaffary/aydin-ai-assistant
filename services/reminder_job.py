@@ -4,7 +4,6 @@ from datetime import datetime
 
 from services.reminder_service import ReminderService
 
-
 service = ReminderService()
 
 
@@ -23,14 +22,10 @@ async def check_reminders(context):
 
             await context.bot.send_message(
                 chat_id=reminder["user_id"],
-                text=(
-                    "🔔 یادآوری شما:\n\n"
-                    f"📝 {reminder['text']}"
-                ),
+                text=("🔔 یادآوری شما:\n\n" f"📝 {reminder['text']}"),
             )
 
         else:
             remaining.append(reminder)
-
 
     service.save(remaining)

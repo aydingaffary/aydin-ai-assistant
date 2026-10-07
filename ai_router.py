@@ -17,7 +17,7 @@ class AIRouter:
 
     def __init__(self) -> None:
         self.providers = []
-
+        self.last_provider = "unknown"
         for provider_class in [
             GroqProvider,
             GeminiProvider,
@@ -44,6 +44,7 @@ class AIRouter:
                     "Trying provider: %s",
                     provider_name,
                 )
+                self.last_provider = provider_name
 
                 with ThreadPoolExecutor(max_workers=1) as executor:
                     future = executor.submit(

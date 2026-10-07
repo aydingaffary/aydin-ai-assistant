@@ -13,7 +13,6 @@ from telegram.ext import ContextTypes
 
 from services.challenge_service import ChallengeService
 
-
 service = ChallengeService()
 
 
@@ -48,8 +47,7 @@ async def challenge_menu(
     ]
 
     await update.message.reply_text(
-        "🧩 مسابقه روزانه\n\n"
-        "یک گزینه را انتخاب کنید:",
+        "🧩 مسابقه روزانه\n\n" "یک گزینه را انتخاب کنید:",
         reply_markup=ReplyKeyboardMarkup(
             keyboard,
             resize_keyboard=True,
@@ -80,14 +78,12 @@ async def handle_challenge(
 
         return
 
-
     user = service.update_visit(user_id)
 
     question = service.get_question()
 
     context.user_data["challenge"] = question
     context.user_data["challenge_time"] = datetime.now()
-
 
     text = (
         "🧩 چالش روزانه\n\n"
@@ -97,7 +93,6 @@ async def handle_challenge(
         f"🎯 {question['question']}\n\n"
         "⏳ فرصت پاسخ: 10 ثانیه"
     )
-
 
     await update.message.reply_text(
         text,
@@ -111,38 +106,28 @@ async def save_username(
 ):
     """Save username."""
 
-    if not context.user_data.get(
-        "waiting_username"
-    ):
+    if not context.user_data.get("waiting_username"):
         return
-
 
     username = update.message.text.strip()
 
-
     if len(username) < 3:
 
-        await update.message.reply_text(
-            "❌ نام باید حداقل ۳ کاراکتر باشد."
-        )
+        await update.message.reply_text("❌ نام باید حداقل ۳ کاراکتر باشد.")
 
         return
 
-
     user_id = update.effective_user.id
-
 
     service.save_username(
         user_id,
         username,
     )
 
-
     context.user_data.pop(
         "waiting_username",
         None,
     )
-
 
     await update.message.reply_text(
         f"✅ نام کاربری شما ثبت شد:\n"
@@ -150,12 +135,10 @@ async def save_username(
         "🧩 اولین چالش شما شروع می‌شود!"
     )
 
-
     await handle_challenge(
         update,
         context,
     )
-
 
 
 async def check_answer(
@@ -168,43 +151,25 @@ async def check_answer(
 
     await query.answer()
 
-
     user_id = update.effective_user.id
 
-
-    question = context.user_data.get(
-        "challenge"
-    )
-
+    question = context.user_data.get("challenge")
 
     if not question:
 
-        await query.edit_message_text(
-            "❌ چالشی پیدا نشد."
-        )
+        await query.edit_message_text("❌ چالشی پیدا نشد.")
 
         return
 
-
-
-    start_time = context.user_data.get(
-        "challenge_time"
-    )
-
+    start_time = context.user_data.get("challenge_time")
 
     if start_time:
 
-        elapsed = (
-            datetime.now() - start_time
-        ).seconds
-
+        elapsed = (datetime.now() - start_time).seconds
 
         if elapsed > 10:
 
-            user = service.wrong_answer(
-                user_id
-            )
-
+            user = service.wrong_answer(user_id)
 
             context.user_data.pop(
                 "challenge",
@@ -216,7 +181,6 @@ async def check_answer(
                 None,
             )
 
-
             keyboard = [
                 [
                     InlineKeyboardButton(
@@ -226,32 +190,21 @@ async def check_answer(
                 ]
             ]
 
-
             await query.edit_message_text(
                 "⏰ زمان تمام شد.\n\n"
                 "⭐️ -5 امتیاز\n"
                 "🔥 استریک پاسخ صحیح قطع شد\n"
                 f"🏆 امتیاز کل: {user['score']}",
-                reply_markup=InlineKeyboardMarkup(
-                    keyboard
-                ),
+                reply_markup=InlineKeyboardMarkup(keyboard),
             )
 
             return
 
-
-
-    selected = int(
-        query.data.split("_")[1]
-    )
-
+    selected = int(query.data.split("_")[1])
 
     if selected == question["answer"]:
 
-        user = service.correct_answer(
-            user_id
-        )
-
+        user = service.correct_answer(user_id)
 
         text = (
             "✅ درست است!\n\n"
@@ -264,13 +217,9 @@ async def check_answer(
             f"{user['score']}"
         )
 
-
     else:
 
-        user = service.wrong_answer(
-            user_id
-        )
-
+        user = service.wrong_answer(user_id)
 
         text = (
             "❌ جواب اشتباه بود.\n\n"
@@ -279,8 +228,6 @@ async def check_answer(
             f"🏆 امتیاز کل: "
             f"{user['score']}"
         )
-
-
 
     context.user_data.pop(
         "challenge",
@@ -292,7 +239,6 @@ async def check_answer(
         None,
     )
 
-
     keyboard = [
         [
             InlineKeyboardButton(
@@ -302,13 +248,11 @@ async def check_answer(
         ]
     ]
 
-
     await query.edit_message_text(
         text,
-        reply_markup=InlineKeyboardMarkup(
-            keyboard
-        ),
+        reply_markup=InlineKeyboardMarkup(keyboard),
     )
+
 
 async def next_challenge(
     update: Update,
@@ -320,19 +264,14 @@ async def next_challenge(
 
     await query.answer()
 
-
     question = service.get_question()
-
 
     context.user_data["challenge"] = question
 
     context.user_data["challenge_time"] = datetime.now()
 
-
     await query.edit_message_text(
-        "🧩 چالش روزانه\n\n"
-        f"🎯 {question['question']}\n\n"
-        "⏳ فرصت پاسخ: 10 ثانیه",
+        "🧩 چالش روزانه\n\n" f"🎯 {question['question']}\n\n" "⏳ فرصت پاسخ: 10 ثانیه",
         reply_markup=build_keyboard(question),
     )
 
@@ -349,25 +288,14 @@ async def show_rank(
 
     rank = service.get_rank(user_id)
 
-    medal = service.get_medal(
-        user["score"]
-    )
+    medal = service.get_medal(user["score"])
 
-
-    total = user.get(
-        "total_questions",
-        0
-    )
+    total = user.get("total_questions", 0)
 
     success_rate = 0
 
     if total:
-        success_rate = int(
-            user.get("correct_answers", 0)
-            / total
-            * 100
-        )
-
+        success_rate = int(user.get("correct_answers", 0) / total * 100)
 
     await update.message.reply_text(
         "🏆 وضعیت مسابقه\n\n"

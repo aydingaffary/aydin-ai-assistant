@@ -17,8 +17,7 @@ async def handle_movie_menu(
     ]
 
     await update.message.reply_text(
-        "🎬 بخش فیلم و سریال\n\n"
-        "لطفاً یک گزینه را انتخاب کنید:",
+        "🎬 بخش فیلم و سریال\n\n" "لطفاً یک گزینه را انتخاب کنید:",
         reply_markup=ReplyKeyboardMarkup(
             keyboard,
             resize_keyboard=True,

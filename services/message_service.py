@@ -32,7 +32,6 @@ class MessageService:
                 ),
             )
 
-
     def get_messages(
         self,
         user_id: int,

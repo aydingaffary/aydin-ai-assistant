@@ -31,14 +31,9 @@ async def handle_tv_upcoming(
 
     for index, item in enumerate(series[:10], start=1):
 
-        jalali_date = format_jalali_date(
-            date.fromisoformat(item["date"])
-        )
+        jalali_date = format_jalali_date(date.fromisoformat(item["date"]))
 
-        text += (
-            f"📺 {index}. {item['title']}\n"
-            f"📅 تاریخ پخش: {jalali_date}\n"
-        )
+        text += f"📺 {index}. {item['title']}\n" f"📅 تاریخ پخش: {jalali_date}\n"
 
         if item.get("rating"):
             text += f"⭐ امتیاز: {item['rating']}\n"
