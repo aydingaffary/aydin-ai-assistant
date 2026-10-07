@@ -25,6 +25,7 @@ def get_feature_mode(text: str) -> str | None:
         "📰 اخبار": "news",
         "⚽ نتایج فوتبال": "football",
         "⛅ آب‌وهوا": "weather",
+        "⏰ یادآور هوشمند": "reminder",
 
         "🎬 فیلم و سریال": "movie",
         "🔎 جستجوی فیلم": "imdb_search",
@@ -167,6 +168,19 @@ async def handle_message(
         from handlers.football_handler import handle_team_search
 
         await handle_team_search(update, context)
+        return
+    
+    if mode == "reminder":
+        context.user_data["reminder_step"] = "text"
+
+        await update.message.reply_text(
+            "⏰ چه چیزی را یادآوری کنم؟\n\n"
+            "مثال:\n"
+            "خوردن دارو\n"
+            "جلسه\n"
+            "تماشای فوتبال"
+        )
+
         return
 
 
