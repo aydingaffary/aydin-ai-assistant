@@ -1,20 +1,20 @@
 """Reminder handler."""
 
-from telegram import Update
-from telegram.ext import ContextTypes
-
 from datetime import datetime
 
+from services.reminder_service import ReminderService
 
-async def handle_reminder(
-    update: Update,
-    context: ContextTypes.DEFAULT_TYPE,
-):
-    """Create reminder."""
+
+service = ReminderService()
+
+
+async def handle_reminder(update, context):
+    """Handle reminder creation."""
 
     text = update.message.text
 
     step = context.user_data.get("reminder_step")
+
 
     if step == "text":
         context.user_data["reminder_text"] = text
@@ -38,19 +38,24 @@ async def handle_reminder(
 
         except ValueError:
             await update.message.reply_text(
-                "❌ فرمت ساعت اشتباه است.\n"
+                "❌ ساعت اشتباه است.\n"
                 "مثال درست: 11:00"
             )
             return
 
 
-        context.user_data.pop(
-            "reminder_step",
-            None
+        service.add(
+            user_id=update.effective_user.id,
+            text=reminder_text,
+            time=text,
         )
+
+
+        context.user_data.clear()
+
 
         await update.message.reply_text(
             "✅ یادآوری ثبت شد.\n\n"
-            f"🔔 زمان: {text}\n"
-            f"📝 متن: {reminder_text}"
+            f"🔔 ساعت: {text}\n"
+            f"📝 کار: {reminder_text}"
         )

@@ -25,7 +25,6 @@ def get_feature_mode(text: str) -> str | None:
         "📰 اخبار": "news",
         "⚽ نتایج فوتبال": "football",
         "⛅ آب‌وهوا": "weather",
-        "⏰ یادآور هوشمند": "reminder",
 
         "🎬 فیلم و سریال": "movie",
         "🔎 جستجوی فیلم": "imdb_search",
@@ -33,6 +32,8 @@ def get_feature_mode(text: str) -> str | None:
         "📺 سریال‌های پیش رو": "upcoming_tv",
 
         "🍳 آشپزی": "cooking",
+        "⏰ یادآور هوشمند": "reminder",
+        "🧩 چالش روزانه": "challenge",
     }
 
     return features.get(text)
@@ -71,23 +72,38 @@ async def handle_message(
 
     logger.info("Router received message: %s", text)
 
+
     if text == "↩️ منوی اصلی":
         context.user_data.clear()
         return
 
-    # دریافت نام فیلم برای جستجو
+
+    # Movie search input
     if context.user_data.get("waiting_movie"):
         await handle_movie_search(update, context)
         return
 
+
+    # Reminder input
+    if context.user_data.get("reminder_step"):
+        from handlers.reminder_handler import handle_reminder
+
+        await handle_reminder(update, context)
+        return
+
+
     mode = get_feature_mode(text)
 
+
     if mode:
+
         context.user_data["mode"] = mode
+
 
         if mode == "movie":
             await handle_movie_menu(update, context)
             return
+
 
         if mode == "imdb_search":
             context.user_data["waiting_movie"] = True
@@ -97,11 +113,18 @@ async def handle_message(
             )
             return
 
+        if mode == "challenge":
+            from handlers.challenge_handler import handle_challenge
+
+            await handle_challenge(update, context)
+            return
+        
         if mode == "upcoming_movies":
             from handlers.upcoming_handler import handle_upcoming
 
             await handle_upcoming(update, context)
             return
+
 
         if mode == "upcoming_tv":
             from handlers.tv_upcoming_handler import handle_tv_upcoming
@@ -109,23 +132,40 @@ async def handle_message(
             await handle_tv_upcoming(update, context)
             return
 
+
+        if mode == "reminder":
+            context.user_data["reminder_step"] = "text"
+
+            await update.message.reply_text(
+                "⏰ چه چیزی را یادآوری کنم؟\n\n"
+                "مثال:\n"
+                "خوردن دارو\n"
+                "جلسه\n"
+                "تماشای فوتبال"
+            )
+            return
+
+
         if mode == "weather":
             await update.message.reply_text(
                 "⛅ لطفاً نام شهر خود را وارد کنید."
             )
             return
 
+
         if mode == "news":
             await update.message.reply_text(
-                "📰 لطفاً موضوع یا کشور مورد نظر خود را وارد کنید."
+                "📰 لطفاً موضوع مورد نظر را وارد کنید."
             )
             return
 
+
         if mode == "smart_assistant":
             await update.message.reply_text(
-                "🧠 لطفاً درخواست خود را ارسال کنید."
+                "🧠 درخواست خود را ارسال کنید."
             )
             return
+
 
         if mode == "currency":
             from handlers.market_handler import handle_market
@@ -133,18 +173,22 @@ async def handle_message(
             await handle_market(update, context)
             return
 
+
         if mode == "football":
             from handlers.football_handler import handle_football
 
             await handle_football(update, context)
             return
 
+
         if mode == "cooking":
             await cooking(update, context)
             return
 
 
+
     mode = context.user_data.get("mode")
+
 
     if mode == "weather":
         from handlers.weather_handler import handle_weather
@@ -152,11 +196,13 @@ async def handle_message(
         await handle_weather(update, context)
         return
 
+
     if mode == "news":
         from handlers.news_handler import handle_news
 
         await handle_news(update, context)
         return
+
 
     if mode == "smart_assistant":
         from handlers.ai_handler import handle_ai
@@ -164,24 +210,13 @@ async def handle_message(
         await handle_ai(update, context)
         return
 
+
     if mode == "football":
         from handlers.football_handler import handle_team_search
 
         await handle_team_search(update, context)
         return
-    
-    if mode == "reminder":
-        context.user_data["reminder_step"] = "text"
 
-        await update.message.reply_text(
-            "⏰ چه چیزی را یادآوری کنم؟\n\n"
-            "مثال:\n"
-            "خوردن دارو\n"
-            "جلسه\n"
-            "تماشای فوتبال"
-        )
-
-        return
 
 
 def register_handlers(application):

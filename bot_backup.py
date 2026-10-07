@@ -1,18 +1,16 @@
-
 import logging
-from handlers.challenge_handler import (
-    check_answer,
-    next_challenge,
-)
+
 from logging_config import setup_logging
-from services.reminder_job import check_reminders
+
 from telegram.ext import (
     ApplicationBuilder,
     CommandHandler,
     CallbackQueryHandler,
 )
-
-from handlers.challenge_handler import check_answer
+from handlers.cooking_handler import (
+    cooking,
+    next_recipe,
+)
 from handlers.cooking_handler import (
     cooking,
     next_recipe,
@@ -63,38 +61,31 @@ async def error_handler(update, context):
         "Bot error",
         exc_info=context.error,
     )
+
+
 async def post_init(application):
     """Start background services."""
 
     football_scheduler = FootballScheduler(
         pipeline=FootballNotificationPipeline(
-            monitor=FootballMonitor(
-                provider_manager=FootballProviderManager()
-            )
+            monitor=FootballMonitor(provider_manager=FootballProviderManager())
         ),
         router=FootballNotificationRouter(),
     )
 
-    application.bot_data["football_scheduler"] = (
-        football_scheduler
-    )
+    application.bot_data["football_scheduler"] = football_scheduler
 
-    await football_scheduler.start(
-        application
-    )
+    await football_scheduler.start(application)
 
 
 async def post_shutdown(application):
     """Stop background services."""
 
-    football_scheduler = (
-        application.bot_data.get(
-            "football_scheduler"
-        )
-    )
+    football_scheduler = application.bot_data.get("football_scheduler")
 
     if football_scheduler is not None:
         await football_scheduler.stop()
+
 
 def main():
     """Start the Telegram bot."""
@@ -110,15 +101,7 @@ def main():
         .post_init(post_init)
         .post_shutdown(post_shutdown)
         .build()
-        
     )
-    if application.job_queue:
-        application.job_queue.run_repeating(
-            check_reminders,
-            interval=30,
-            first=10,
-        )
-
 
     # Commands
     application.add_handler(
@@ -127,22 +110,6 @@ def main():
             start,
         )
     )
-
-    application.add_handler(
-        CallbackQueryHandler(
-            next_challenge,
-            pattern="^next_challenge$",
-        )
-    )
-
-    application.add_handler(
-        CallbackQueryHandler(
-            check_answer,
-            pattern="^answer_",
-        )
-    )
-
-
     application.add_handler(
         CallbackQueryHandler(
             next_recipe,
@@ -164,7 +131,6 @@ def main():
             pattern="^news_more$",
         )
     )
-    
 
     # Football: show user's teams
     application.add_handler(
@@ -204,13 +170,6 @@ def main():
             pattern="^remove_team_menu$",
         )
     )
-    application.add_handler(
-        CallbackQueryHandler(
-            check_answer,
-            pattern="^answer_",
-        )
-    )
-
 
     # Football: remove selected team
     application.add_handler(
@@ -219,24 +178,14 @@ def main():
             pattern="^remove_team_",
         )
     )
-    application.add_handler(
-        CallbackQueryHandler(
-            next_recipe,
-            pattern="^next_recipe$"
-        )
-    )   
+    application.add_handler(CallbackQueryHandler(next_recipe, pattern="^next_recipe$"))
 
-    
     # Text router
     register_handlers(application)
 
-    application.add_error_handler(
-        error_handler
-    )
+    application.add_error_handler(error_handler)
 
-    logging.getLogger(__name__).info(
-        "Aydin AI Assistant is running..."
-    )
+    logging.getLogger(__name__).info("Aydin AI Assistant is running...")
 
     application.run_polling()
 

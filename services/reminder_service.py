@@ -1,31 +1,67 @@
-"""Reminder service."""
+"""Reminder storage service."""
 
-from datetime import datetime
+import json
+from pathlib import Path
+
+
+FILE_PATH = Path("data/reminders.json")
 
 
 class ReminderService:
-    """Manage user reminders."""
+    """Manage reminders."""
 
-    def __init__(self):
-        self.reminders = []
+    def load(self):
+        """Load reminders."""
 
-    def add_reminder(
+        if not FILE_PATH.exists():
+            return []
+
+        with open(
+            FILE_PATH,
+            "r",
+            encoding="utf-8",
+        ) as file:
+            return json.load(file)
+
+
+    def save(self, reminders):
+        """Save reminders."""
+
+        FILE_PATH.parent.mkdir(
+            exist_ok=True
+        )
+
+        with open(
+            FILE_PATH,
+            "w",
+            encoding="utf-8",
+        ) as file:
+            json.dump(
+                reminders,
+                file,
+                ensure_ascii=False,
+                indent=2,
+            )
+
+
+    def add(
         self,
         user_id: int,
         text: str,
-        reminder_time: str,
+        time: str,
     ):
-        """Add new reminder."""
+        """Add reminder."""
 
-        self.reminders.append(
+        reminders = self.load()
+
+        reminders.append(
             {
                 "user_id": user_id,
                 "text": text,
-                "time": reminder_time,
+                "time": time,
             }
         )
 
-    def get_reminders(self):
-        """Return reminders."""
+        self.save(reminders)
 
-        return self.reminders
+        return True

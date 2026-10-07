@@ -1,0 +1,52 @@
+[
+  {
+    "question": "پایتون توسط چه کسی ساخته شد؟",
+    "options": [
+      "Guido van Rossum",
+      "Elon Musk",
+      "Dennis Ritchie",
+      "James Gosling"
+    ],
+    "answer": 0
+  },
+  {
+    "question": "کدام مورد یک سیستم‌عامل است؟",
+    "options": [
+      "Python",
+      "Linux",
+      "HTML",
+      "SQL"
+    ],
+    "answer": 1
+  },
+  {
+    "question": "بزرگترین سیاره منظومه شمسی کدام است؟",
+    "options": [
+      "زمین",
+      "مریخ",
+      "مشتری",
+      "زحل"
+    ],
+    "answer": 2
+  },
+  {
+    "question": "حرکت اسب در شطرنج چگونه است؟",
+    "options": [
+      "قطری",
+      "L شکل",
+      "مستقیم",
+      "دو خانه جلو"
+    ],
+    "answer": 1
+  },
+  {
+    "question": "HTML مخفف چیست؟",
+    "options": [
+      "Hyper Text Markup Language",
+      "High Text Machine Language",
+      "Hyper Tool Multi Language",
+      "Home Text Markup Language"
+    ],
+    "answer": 0
+  }
+]
