@@ -1,52 +1,48 @@
-"""Movie release service using TMDB API."""
-
-from datetime import date, timedelta
+"""Movie service using OMDb API."""
 
 import requests
 
-from config import TMDB_API_KEY
+from config import OMDB_API_KEY
 
 
 class ReleaseService:
-    """Fetch upcoming US movie releases."""
+    """Fetch movie information from OMDb."""
 
-    BASE_URL = "https://api.themoviedb.org/3"
+    BASE_URL = "https://www.omdbapi.com/"
 
-    def get_releases(
-        self,
-        start_date: date,
-        days: int = 7,
-    ) -> list[dict]:
-        """Return movies released in US during date range."""
+    def get_movie(self, title: str) -> dict | None:
+        """Return movie information by title."""
 
-        if not TMDB_API_KEY:
-            return []
-
-        end_date = start_date + timedelta(days=days - 1)
+        if not OMDB_API_KEY:
+            return None
 
         response = requests.get(
-            f"{self.BASE_URL}/discover/movie",
+            self.BASE_URL,
             params={
-                "api_key": TMDB_API_KEY,
-                "region": "US",
-                "primary_release_date.gte": (start_date.isoformat()),
-                "primary_release_date.lte": (end_date.isoformat()),
-                "sort_by": ("primary_release_date.asc"),
+                "apikey": OMDB_API_KEY,
+                "t": title,
+                "plot": "full",
             },
             timeout=15,
         )
 
         response.raise_for_status()
 
-        results = response.json().get("results", [])
+        data = response.json()
 
-        return [
-            {
-                "title": movie["title"],
-                "release_date": date.fromisoformat(movie["release_date"]),
-                "type": "movie",
-                "url": ("https://www.themoviedb.org/movie/" f"{movie['id']}"),
-            }
-            for movie in results
-            if movie.get("release_date")
-        ]
+        if data.get("Response") != "True":
+            return None
+
+        return {
+            "title": data.get("Title"),
+            "year": data.get("Year"),
+            "genre": data.get("Genre"),
+            "director": data.get("Director"),
+            "actors": data.get("Actors"),
+            "plot": data.get("Plot"),
+            "imdb_rating": data.get("imdbRating"),
+            "imdb_votes": data.get("imdbVotes"),
+            "poster": data.get("Poster"),
+            "imdb_id": data.get("imdbID"),
+            "type": data.get("Type"),
+        }
