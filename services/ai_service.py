@@ -107,11 +107,7 @@ class AIService:
 
         response_time = time.time() - start_time
 
-        self.security_service.log_request(
-            user_id=user_id,
-            content=prompt,
-            status="allowed",
-        )
+        
 
         self.message_service.save_message(
             user_id=user_id,

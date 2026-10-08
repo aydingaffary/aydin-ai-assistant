@@ -38,6 +38,7 @@ from handlers.football_handler import (
     start_team_search,
 )
 from handlers.news_more_handler import handle_news_more
+from handlers.news_handler import handle_news
 from handlers.router import register_handlers
 from handlers.start_handler import start
 
