@@ -23,6 +23,7 @@ from handlers.admin_handler import (
     unban_user,
     users_list,
     payments_list,
+    approve_payment,
 )
 from handlers.challenge_handler import check_answer, next_challenge
 from handlers.cooking_handler import next_recipe
@@ -209,6 +210,7 @@ def main():
         ("blocked_attempts", blocked_attempts),
         ("ai_performance", ai_performance),
         ("payments", payments_list),
+        ("approve", approve_payment),
     ]
 
     for command, handler in admin_handlers:

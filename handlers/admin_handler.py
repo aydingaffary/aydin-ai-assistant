@@ -4,7 +4,9 @@ from datetime import datetime
 
 from telegram import Update
 from telegram.ext import ContextTypes
+from services.payment_service import PaymentService
 
+payment_service = PaymentService()
 from database.db import get_connection
 from services.activity_service import ActivityService
 from services.ban_service import BanService
@@ -697,3 +699,42 @@ async def payments_list(
         )
 
     await update.message.reply_text(text)
+
+
+async def approve_payment(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE,
+):
+    """Approve payment."""
+
+    if not await check_admin(update):
+        return
+
+    if not context.args:
+
+        await update.message.reply_text(
+            "❌ شماره پرداخت را وارد کنید.\n\n"
+            "مثال:\n"
+            "/approve 2"
+        )
+
+        return
+
+    payment_id = int(context.args[0])
+
+    result = payment_service.approve_payment(
+        payment_id
+    )
+
+    if not result:
+
+        await update.message.reply_text(
+            "❌ پرداخت پیدا نشد."
+        )
+
+        return
+
+    await update.message.reply_text(
+        "✅ پرداخت تأیید شد.\n"
+        "⭐ اشتراک کاربر فعال شد."
+    )
