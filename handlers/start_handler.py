@@ -17,11 +17,8 @@ def get_main_keyboard() -> ReplyKeyboardMarkup:
         ["🎬 فیلم و سریال", "⛅ آب‌وهوا"],
         ["🍳 آشپزی", "🧩 چالش روزانه"],
         ["⏰ یادآور هوشمند", "✍️ ابزارهای AI"],
-        ["✍️ ابزارهای AI"],
-        ["📩 ارتباط با سازنده"],
-        ["↩️ منوی اصلی"],
+        ["👨‍💻 ارتباط با توسعه‌دهنده"],
     ]
-
     return ReplyKeyboardMarkup(
         keyboard,
         resize_keyboard=True,

@@ -34,6 +34,7 @@ def get_feature_mode(text: str) -> str | None:
         "🍳 آشپزی": "cooking",
         "⏰ یادآور هوشمند": "reminder",
         "🧩 چالش روزانه": "challenge",
+        "👨‍💻 ارتباط با توسعه‌دهنده": "developer",
     }
 
     return features.get(text)
@@ -134,6 +135,17 @@ async def handle_message(
 
         context.user_data["mode"] = mode
 
+        
+        if mode == "developer":
+
+            await update.message.reply_text(
+                "👨‍💻 ارتباط با توسعه‌دهنده:\n\n"
+                "https://t.me/Aydingaffary"
+            )
+
+            return
+        
+        
         if mode == "challenge":
 
             activity_service.log_activity(
