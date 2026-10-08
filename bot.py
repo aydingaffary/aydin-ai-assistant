@@ -5,6 +5,8 @@ import logging
 from config import BOT_TOKEN
 from database.db import init_database
 
+
+
 from handlers.admin_handler import (
     admin_panel,
     ai_logs,
@@ -20,6 +22,7 @@ from handlers.admin_handler import (
     today_users,
     unban_user,
     users_list,
+    payments_list,
 )
 from handlers.challenge_handler import check_answer, next_challenge
 from handlers.cooking_handler import next_recipe
@@ -205,6 +208,7 @@ def main():
         ("ai_requests", ai_requests),
         ("blocked_attempts", blocked_attempts),
         ("ai_performance", ai_performance),
+        ("payments", payments_list),
     ]
 
     for command, handler in admin_handlers:

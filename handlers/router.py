@@ -3,6 +3,10 @@
 import logging
 from handlers.subscription_handler import handle_subscription
 from services.activity_service import ActivityService
+from handlers.subscription_handler import (
+    handle_subscription,
+    handle_subscription_plan,
+)
 from services.subscription_service import SubscriptionService
 activity_service = ActivityService()
 subscription_service = SubscriptionService()
@@ -86,7 +90,20 @@ async def handle_message(
         await handle_reminder(update, context)
 
         return
+    
+    if text in [
+        "🟢 اشتراک یک ماهه",
+        "🔵 اشتراک سه ماهه",
+    ]:
 
+        await handle_subscription_plan(
+            update,
+            context,
+        )
+
+        return
+
+    
     mode = get_feature_mode(text)
 
     if mode:

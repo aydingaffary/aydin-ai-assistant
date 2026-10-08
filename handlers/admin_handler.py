@@ -76,6 +76,34 @@ async def check_admin(update: Update) -> bool:
 
     return True
 
+def get_payments(
+    status="pending",
+    limit=20,
+):
+    """Get payment requests."""
+
+    with get_connection() as connection:
+
+        return connection.execute(
+            """
+            SELECT
+                id,
+                user_id,
+                plan,
+                amount,
+                status,
+                created_at
+            FROM payments
+            WHERE status=?
+            ORDER BY id DESC
+            LIMIT ?
+            """,
+            (
+                status,
+                limit,
+            ),
+        ).fetchall()
+
 
 async def admin_panel(
     update: Update,
@@ -635,5 +663,37 @@ async def ai_performance(
         for item in stats["security"]:
 
             text += f"• {item[0]} : {item[1]}\n"
+
+    await update.message.reply_text(text)
+
+async def payments_list(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE,
+):
+    """Show pending payments."""
+
+    if not await check_admin(update):
+        return
+
+    payments = get_payments()
+
+    if not payments:
+        await update.message.reply_text(
+            "💳 درخواست پرداختی وجود ندارد."
+        )
+        return
+
+    text = "💳 درخواست‌های پرداخت:\n\n"
+
+    for payment in payments:
+
+        text += (
+            f"🆔 شماره: {payment[0]}\n"
+            f"👤 کاربر: {payment[1]}\n"
+            f"📦 پلن: {payment[2]}\n"
+            f"💰 مبلغ: {payment[3]:,} تومان\n"
+            f"⏳ وضعیت: {payment[4]}\n"
+            f"📅 تاریخ: {payment[5]}\n\n"
+        )
 
     await update.message.reply_text(text)

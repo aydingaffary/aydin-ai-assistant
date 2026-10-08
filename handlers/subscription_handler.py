@@ -1,6 +1,13 @@
 """Subscription handler."""
+from services.payment_service import PaymentService
 
-from telegram import Update, ReplyKeyboardMarkup
+payment_service = PaymentService()
+from telegram import (
+    InlineKeyboardButton,
+    InlineKeyboardMarkup,
+    ReplyKeyboardMarkup,
+    Update,
+)
 from telegram.ext import ContextTypes
 
 
@@ -27,4 +34,35 @@ async def handle_subscription(
             keyboard,
             resize_keyboard=True,
         ),
+    )
+
+
+async def handle_subscription_plan(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE,
+) -> None:
+    """Handle selected subscription plan."""
+
+    text = update.message.text
+
+    if text == "🟢 اشتراک یک ماهه":
+        plan = "اشتراک یک ماهه"
+        price = "۹۹,۰۰۰ تومان"
+
+    elif text == "🔵 اشتراک سه ماهه":
+        plan = "اشتراک سه ماهه"
+        price = "۲۵۰,۰۰۰ تومان"
+
+    else:
+        return
+    payment_service.create_payment(
+        user_id=update.effective_user.id,
+        plan=plan,
+        amount=99000 if "یک" in plan else 250000,
+    )
+    await update.message.reply_text(
+        "💎 درخواست خرید اشتراک\n\n"
+        f"📦 پلن انتخابی: {plan}\n"
+        f"💰 مبلغ: {price}\n\n"
+        "⏳ درگاه پرداخت به‌زودی فعال می‌شود."
     )
