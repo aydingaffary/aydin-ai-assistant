@@ -1,50 +1,28 @@
+"""Application entry point for Aydin AI Assistant."""
+
 import logging
-from handlers.admin_handler import ai_requests
-from handlers.challenge_handler import (
-    check_answer,
-    next_challenge,
-)
-from handlers.admin_handler import ai_performance
-from handlers.admin_handler import ai_stats
-from handlers.admin_handler import (
-    admin_panel,
-    users_list,
-    today_users,
-    premium_users,
-    stats,
-    ai_logs,
-    blocked_requests,
-    ai_stats,
-    banned_users,
-    ban_user,
-    unban_user,
-    blocked_attempts,
-)
 
-
-from logging_config import setup_logging
-from services.reminder_job import check_reminders
-from telegram.ext import (
-    ApplicationBuilder,
-    CommandHandler,
-    CallbackQueryHandler,
-)
-from handlers.admin_handler import (
-    admin_panel,
-    users_list,
-    today_users,
-    premium_users,
-    stats,
-)
-from handlers.challenge_handler import check_answer
-from handlers.cooking_handler import (
-    cooking,
-    next_recipe,
-)
-from handlers.news_more_handler import handle_news_more
+from config import BOT_TOKEN
 from database.db import init_database
-from handlers.router import register_handlers
-from handlers.start_handler import start
+
+from handlers.admin_handler import (
+    admin_panel,
+    ai_logs,
+    ai_performance,
+    ai_requests,
+    ai_stats,
+    ban_user,
+    blocked_attempts,
+    blocked_requests,
+    banned_users,
+    premium_users,
+    stats,
+    today_users,
+    unban_user,
+    users_list,
+)
+from handlers.challenge_handler import check_answer, next_challenge
+from handlers.cooking_handler import next_recipe
 from handlers.football_handler import (
     add_team_callback,
     remove_team_callback,
@@ -53,29 +31,24 @@ from handlers.football_handler import (
     start_remove_team,
     start_team_search,
 )
+from handlers.news_more_handler import handle_news_more
+from handlers.router import register_handlers
+from handlers.start_handler import start
+
+from logging_config import setup_logging
+
 from services.football_monitor import FootballMonitor
-from services.football_notification_pipeline import (
-    FootballNotificationPipeline,
-)
-from services.football_notification_router import (
-    FootballNotificationRouter,
-)
-from services.football_provider_manager import (
-    FootballProviderManager,
-)
-from services.football_scheduler import (
-    FootballScheduler,
-)
-from handlers.admin_handler import (
-    ban_user,
-    unban_user,
-)
-from config import BOT_TOKEN
+from services.football_notification_pipeline import FootballNotificationPipeline
+from services.football_notification_router import FootballNotificationRouter
+from services.football_provider_manager import FootballProviderManager
+from services.football_scheduler import FootballScheduler
+from services.reminder_job import check_reminders
+
+from telegram.ext import ApplicationBuilder, CallbackQueryHandler, CommandHandler
 
 
 async def cancel(update, context):
     """Cancel the current operation."""
-
     context.user_data.pop("mode", None)
 
     await update.message.reply_text(
@@ -86,7 +59,13 @@ async def cancel(update, context):
 
 async def error_handler(update, context):
     """Handle unexpected errors."""
+    del update
 
+    logging.getLogger(__name__).exception(
+        "Bot error",
+        exc_info=context.error,
+    )
+    """Handle unexpected errors."""
     logging.getLogger(__name__).exception(
         "Bot error",
         exc_info=context.error,
@@ -95,7 +74,6 @@ async def error_handler(update, context):
 
 async def post_init(application):
     """Start background services."""
-
     football_scheduler = FootballScheduler(
         pipeline=FootballNotificationPipeline(
             monitor=FootballMonitor(provider_manager=FootballProviderManager())
@@ -110,7 +88,6 @@ async def post_init(application):
 
 async def post_shutdown(application):
     """Stop background services."""
-
     football_scheduler = application.bot_data.get("football_scheduler")
 
     if football_scheduler is not None:
@@ -132,6 +109,7 @@ def main():
         .post_shutdown(post_shutdown)
         .build()
     )
+
     if application.job_queue:
         application.job_queue.run_repeating(
             check_reminders,
@@ -139,21 +117,17 @@ def main():
             first=10,
         )
 
-    # Commands
-    application.add_handler(
-        CommandHandler(
-            "start",
-            start,
-        )
-    )
+    # General commands
+    application.add_handler(CommandHandler("start", start))
+    application.add_handler(CommandHandler("cancel", cancel))
 
+    # Challenges
     application.add_handler(
         CallbackQueryHandler(
             next_challenge,
             pattern="^next_challenge$",
         )
     )
-
     application.add_handler(
         CallbackQueryHandler(
             check_answer,
@@ -161,6 +135,7 @@ def main():
         )
     )
 
+    # Recipes
     application.add_handler(
         CallbackQueryHandler(
             next_recipe,
@@ -168,14 +143,7 @@ def main():
         )
     )
 
-    application.add_handler(
-        CommandHandler(
-            "cancel",
-            cancel,
-        )
-    )
-
-    # News more
+    # News
     application.add_handler(
         CallbackQueryHandler(
             handle_news_more,
@@ -183,38 +151,31 @@ def main():
         )
     )
 
-    # Football: show user's teams
+    # Football
     application.add_handler(
         CallbackQueryHandler(
             show_my_teams,
             pattern="^my_teams$",
         )
     )
-
-    # Football: start adding team
     application.add_handler(
         CallbackQueryHandler(
             start_team_search,
             pattern="^add_team_menu$",
         )
     )
-
-    # Football: save selected team
     application.add_handler(
         CallbackQueryHandler(
             add_team_callback,
             pattern="^add_team_",
         )
     )
-    # Football: live scores
     application.add_handler(
         CallbackQueryHandler(
             show_live_scores,
             pattern="^live_scores$",
         )
     )
-
-    # Football: remove team menu
     application.add_handler(
         CallbackQueryHandler(
             start_remove_team,
@@ -223,107 +184,36 @@ def main():
     )
     application.add_handler(
         CallbackQueryHandler(
-            check_answer,
-            pattern="^answer_",
-        )
-    )
-
-    application.add_handler(CommandHandler("banned", banned_users))
-
-    application.add_handler(CommandHandler("banned", banned_users))
-
-    application.add_handler(CommandHandler("ban_user", ban_user))
-
-    application.add_handler(CommandHandler("unban_user", unban_user))
-    application.add_handler(
-        CommandHandler(
-            "ai_stats",
-            ai_stats,
-        )
-    )
-
-    # Football: remove selected team
-    application.add_handler(
-        CallbackQueryHandler(
             remove_team_callback,
             pattern="^remove_team_",
         )
     )
-    application.add_handler(CallbackQueryHandler(next_recipe, pattern="^next_recipe$"))
-    application.add_handler(
-        CommandHandler(
-            "admin",
-            admin_panel,
-        )
-    )
-    application.add_handler(
-        CommandHandler(
-            "admin",
-            admin_panel,
-        )
-    )
 
-    application.add_handler(
-        CommandHandler(
-            "users",
-            users_list,
-        )
-    )
+    # Admin commands
+    admin_handlers = [
+        ("admin", admin_panel),
+        ("users", users_list),
+        ("today", today_users),
+        ("premium", premium_users),
+        ("stats", stats),
+        ("banned", banned_users),
+        ("ban_user", ban_user),
+        ("unban_user", unban_user),
+        ("ai_logs", ai_logs),
+        ("blocked", blocked_requests),
+        ("ai_stats", ai_stats),
+        ("ai_requests", ai_requests),
+        ("blocked_attempts", blocked_attempts),
+        ("ai_performance", ai_performance),
+    ]
 
-    application.add_handler(
-        CommandHandler(
-            "today",
-            today_users,
-        )
-    )
+    for command, handler in admin_handlers:
+        application.add_handler(CommandHandler(command, handler))
 
-    application.add_handler(
-        CommandHandler(
-            "premium",
-            premium_users,
-        )
-    )
-
-    application.add_handler(
-        CommandHandler(
-            "stats",
-            stats,
-        )
-    )
-
-    application.add_handler(CommandHandler("ai_logs", ai_logs))
-
-    application.add_handler(CommandHandler("blocked", blocked_requests))
-
-    application.add_handler(CommandHandler("ai_stats", ai_stats))
-
-    application.add_handler(
-        CommandHandler(
-            "ai_requests",
-            ai_requests,
-        )
-    )
-    application.add_handler(CommandHandler("ban_user", ban_user))
-
-    application.add_handler(CommandHandler("unban_user", unban_user))
-
-    application.add_handler(
-        CommandHandler(
-            "blocked_attempts",
-            blocked_attempts,
-        )
-    )
-
-    application.add_handler(
-        CommandHandler(
-            "ai_performance",
-            ai_performance,
-        )
-    )
-
-    # Text router
+    # General text/message router
     register_handlers(application)
 
+    # Error handling
     application.add_error_handler(error_handler)
 
     logging.getLogger(__name__).info("Aydin AI Assistant is running...")
@@ -332,5 +222,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
     main()
