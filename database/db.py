@@ -123,3 +123,15 @@ def init_database() -> None:
             idx_favorite_teams_user_team
             ON favorite_teams(user_id, team_id)
         """)
+        connection.execute(
+            """
+            CREATE TABLE IF NOT EXISTS conversation_memory
+            (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER UNIQUE NOT NULL,
+                summary TEXT NOT NULL,
+                updated_at TEXT NOT NULL
+            )
+            """
+        )
+

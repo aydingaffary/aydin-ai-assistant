@@ -5,7 +5,8 @@ from services.ai_request_service import AIRequestService
 from services.message_service import MessageService
 from services.ban_service import BanService
 from services.rate_limit_service import RateLimitService
-
+from services.memory_service import MemoryService
+from services.memory_writer_service import MemoryWriterService
 
 class AIService:
     """Handle AI conversations."""
@@ -17,7 +18,8 @@ class AIService:
         self.request_service = AIRequestService()
         self.ban_service = BanService()
         self.rate_limit_service = RateLimitService()
-
+        self.memory_service = MemoryService()
+        self.memory_writer_service = MemoryWriterService()
     def ask(
         self,
         user_id: int,
@@ -63,12 +65,40 @@ class AIService:
             content=prompt,
         )
 
-        history = self.message_service.get_messages(user_id)
+        if self.memory_writer_service.should_update(user_id):
 
-        context = "\n".join([f"{role}: {content}" for role, content, _ in history])
+            self.memory_service.save_memory(
+                user_id=user_id,
+                summary=(
+                    "User conversation history exists. "
+                    "Summary generation pending."
+                ),
+            )
+                
+        
+        history = self.message_service.get_messages(
+            user_id
+            )
+
+        memory = self.memory_service.get_memory(
+                user_id
+            )
+
+
+        context = "\n".join(
+            [
+                f"{role}: {content}"
+                for role, content, _ in history[-10:]
+            ]
+        )
 
         final_prompt = (
-            "Conversation history:\n" f"{context}\n\n" "User question:\n" f"{prompt}"
+            "Conversation memory:\n"
+            f"{memory}\n\n"
+            "Recent conversation:\n"
+            f"{context}\n\n"
+            "User question:\n"
+            f"{prompt}"
         )
 
         start_time = time.time()
