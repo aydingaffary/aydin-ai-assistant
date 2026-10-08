@@ -44,6 +44,7 @@ def init_database() -> None:
                 user_id INTEGER PRIMARY KEY,
                 username TEXT,
                 is_premium INTEGER DEFAULT 0,
+                premium_until TEXT,
                 created_at TEXT
             )
         """)

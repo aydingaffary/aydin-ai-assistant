@@ -2,6 +2,7 @@
 
 from datetime import datetime
 
+from dateutil.relativedelta import relativedelta
 from database.db import get_connection
 
 
@@ -71,9 +72,41 @@ class PaymentService:
         if not payment:
             return False
 
+        if payment[4] == "paid":
+            return False
+
         user_id = payment[1]
+        plan = payment[2]
 
         with get_connection() as connection:
+
+            user = connection.execute(
+                """
+                SELECT premium_until
+                FROM users
+                WHERE user_id = ?
+                """,
+                (user_id,),
+            ).fetchone()
+
+            current_until = user[0] if user else None
+
+            if current_until:
+                base_date = datetime.fromisoformat(current_until)
+
+                if base_date < datetime.now():
+                    base_date = datetime.now()
+            else:
+                base_date = datetime.now()
+
+            if plan == "اشتراک یک ماهه":
+                premium_until = base_date + relativedelta(months=1)
+
+            elif plan == "اشتراک سه ماهه":
+                premium_until = base_date + relativedelta(months=3)
+
+            else:
+                return False
 
             connection.execute(
                 """
@@ -90,10 +123,14 @@ class PaymentService:
             connection.execute(
                 """
                 UPDATE users
-                SET is_premium = 1
+                SET is_premium = 1,
+                    premium_until = ?
                 WHERE user_id = ?
                 """,
-                (user_id,),
+                (
+                    premium_until.isoformat(),
+                    user_id,
+                ),
             )
 
         return True

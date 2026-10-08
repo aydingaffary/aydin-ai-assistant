@@ -1,6 +1,8 @@
 """Telegram bot handlers router."""
 
 import logging
+from datetime import datetime
+from services.user_service import UserService
 from handlers.subscription_handler import handle_subscription
 from services.activity_service import ActivityService
 from handlers.subscription_handler import (
@@ -42,6 +44,7 @@ def get_feature_mode(text: str) -> str | None:
         "👨‍💻 ارتباط با توسعه‌دهنده": "developer",
         "✍️ ابزارهای AI": "ai_tools",
         "💎 خرید اشتراک": "subscription",
+        "💎 وضعیت اشتراک": "subscription_status",
     }
 
     return features.get(text)
@@ -110,6 +113,48 @@ async def handle_message(
 
         context.user_data["mode"] = mode
 
+
+        if mode == "subscription_status":
+
+            user_id = update.effective_user.id
+            subscription_service = SubscriptionService()
+
+            if subscription_service.has_access(user_id):
+
+                user = UserService().get_user(user_id)
+
+                if user and user.premium_until:
+                    premium_until = datetime.fromisoformat(
+                        user.premium_until
+                    ).strftime("%Y/%m/%d")
+
+                    await update.message.reply_text(
+                        "💎 وضعیت اشتراک\n\n"
+                        "⭐ اشتراک ویژه فعال است.\n\n"
+                        f"📅 تاریخ انقضا: {premium_until}\n\n"
+                        "✅ دسترسی شما به ابزارهای اشتراکی فعال است."
+                    )
+
+                else:
+                    await update.message.reply_text(
+                        "💎 وضعیت اشتراک\n\n"
+                        "⭐ اشتراک ویژه فعال است.\n\n"
+                        "📅 تاریخ انقضا: نامشخص\n\n"
+                        "✅ دسترسی شما به ابزارهای اشتراکی فعال است."
+                    )
+
+            else:
+
+                await update.message.reply_text(
+                    "💎 وضعیت اشتراک\n\n"
+                    "🔒 شما اشتراک فعال ندارید.\n\n"
+                    "برای استفاده از امکانات ویژه، اشتراک تهیه کنید."
+                )
+
+            return
+
+
+        
         if mode == "subscription":
 
             await handle_subscription(

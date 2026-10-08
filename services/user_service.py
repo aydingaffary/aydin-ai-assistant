@@ -13,6 +13,7 @@ class User:
     user_id: int
     username: str | None
     is_premium: bool
+    premium_until: str | None
     created_at: str
 
 
@@ -56,6 +57,7 @@ class UserService:
                     user_id,
                     username,
                     is_premium,
+                    premium_until,
                     created_at
                 FROM users
                 WHERE user_id = ?
@@ -72,7 +74,8 @@ class UserService:
             user_id=row[0],
             username=row[1],
             is_premium=bool(row[2]),
-            created_at=row[3],
+            premium_until=row[3],
+            created_at=row[4],
         )
 
     def get_or_create_user(
@@ -110,15 +113,31 @@ class UserService:
         return user
     
     
-    def is_premium(
-        self,
-        user_id: int,
-    ) -> bool:
-        """Check if user has premium access."""
+    def is_premium(self, user_id: int) -> bool:
+        """Return True if user has active premium access."""
 
         user = self.get_user(user_id)
 
-        if user is None:
+        if not user:
             return False
 
-        return user.is_premium
+        if not user.is_premium:
+            return False
+
+        if user.premium_until is None:
+            return True
+
+        if datetime.fromisoformat(user.premium_until) <= datetime.now():
+            with get_connection() as connection:
+                connection.execute(
+                    """
+                    UPDATE users
+                    SET is_premium = 0
+                    WHERE user_id = ?
+                    """,
+                    (user_id,),
+                )
+
+            return False
+
+        return True

@@ -18,6 +18,7 @@ def get_main_keyboard() -> ReplyKeyboardMarkup:
         ["🍳 آشپزی", "🧩 چالش روزانه"],
         ["⏰ یادآور هوشمند", "✍️ ابزارهای AI"],
         ["💎 خرید اشتراک"],
+        ["💎 وضعیت اشتراک"],
         ["👨‍💻 ارتباط با توسعه‌دهنده"],
     ]
     return ReplyKeyboardMarkup(

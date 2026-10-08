@@ -722,17 +722,45 @@ async def approve_payment(
 
     payment_id = int(context.args[0])
 
-    result = payment_service.approve_payment(
-        payment_id
-    )
+    payment = payment_service.get_payment(payment_id)
 
-    if not result:
+    if not payment:
 
         await update.message.reply_text(
             "❌ پرداخت پیدا نشد."
         )
 
         return
+    if payment[4] == "paid":
+
+        await update.message.reply_text(
+            "⚠️ این پرداخت قبلاً تأیید شده است."
+        )
+
+        return
+
+    success = payment_service.approve_payment(
+        payment_id
+    )
+
+    if not success:
+
+        await update.message.reply_text(
+            "❌ پرداخت تأیید نشد."
+        )
+
+        return
+
+    user_id = payment[1]
+
+    await context.bot.send_message(
+        chat_id=user_id,
+        text=(
+            "🎉 تبریک!\n\n"
+            "⭐ اشتراک ویژه Aydin AI برای شما فعال شد.\n\n"
+            "✅ اکنون به امکانات Premium دسترسی دارید."
+        ),
+    )
 
     await update.message.reply_text(
         "✅ پرداخت تأیید شد.\n"
