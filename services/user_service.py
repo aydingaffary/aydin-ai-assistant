@@ -108,3 +108,17 @@ class UserService:
             user = self.get_user(user_id)
 
         return user
+    
+    
+    def is_premium(
+        self,
+        user_id: int,
+    ) -> bool:
+        """Check if user has premium access."""
+
+        user = self.get_user(user_id)
+
+        if user is None:
+            return False
+
+        return user.is_premium
