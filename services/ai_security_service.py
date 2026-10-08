@@ -8,6 +8,9 @@ from database.db import get_connection
 class AISecurityService:
     """Handle AI request security and monitoring."""
 
+    MAX_CONTENT_LENGTH = 4000
+    MAX_QUERY_LIMIT = 100
+
     BLOCKED_WORDS = [
         "steal",
         "hack",
@@ -34,6 +37,17 @@ class AISecurityService:
     ) -> bool:
         """Return True if request is allowed."""
 
+        if not isinstance(content, str):
+            return False
+
+        content = content.strip()
+
+        if not content:
+            return False
+
+        if len(content) > self.MAX_CONTENT_LENGTH:
+            return False
+
         text = content.lower()
 
         for word in self.BLOCKED_WORDS:
@@ -50,8 +64,15 @@ class AISecurityService:
     ) -> None:
         """Save AI request log."""
 
-        with get_connection() as connection:
+        if user_id <= 0:
+            return
 
+        if not isinstance(content, str):
+            return
+
+        content = content[: self.MAX_CONTENT_LENGTH]
+
+        with get_connection() as connection:
             connection.execute(
                 """
                 INSERT INTO ai_requests
@@ -77,8 +98,9 @@ class AISecurityService:
     ):
         """Return recent AI requests."""
 
-        with get_connection() as connection:
+        limit = max(1, min(limit, self.MAX_QUERY_LIMIT))
 
+        with get_connection() as connection:
             return connection.execute(
                 """
                 SELECT
@@ -99,19 +121,20 @@ class AISecurityService:
     ):
         """Return blocked AI attempts."""
 
-        with get_connection() as connection:
+        limit = max(1, min(limit, self.MAX_QUERY_LIMIT))
 
+        with get_connection() as connection:
             return connection.execute(
                 """
-                    SELECT
-                        user_id,
-                        content,
-                        created_at
-                    FROM ai_requests
-                    WHERE status = ?
-                    ORDER BY id DESC
-                    LIMIT ?
-                    """,
+                SELECT
+                    user_id,
+                    content,
+                    created_at
+                FROM ai_requests
+                WHERE status = ?
+                ORDER BY id DESC
+                LIMIT ?
+                """,
                 (
                     "banned",
                     limit,
@@ -119,13 +142,15 @@ class AISecurityService:
             ).fetchall()
 
     def get_stats(self):
+        """Return AI security statistics."""
 
         with get_connection() as connection:
-
-            total = connection.execute("""
+            total = connection.execute(
+                """
                 SELECT COUNT(*)
                 FROM ai_requests
-                """).fetchone()[0]
+                """
+            ).fetchone()[0]
 
             allowed = connection.execute(
                 """
@@ -154,10 +179,12 @@ class AISecurityService:
                 ("rate_limited",),
             ).fetchone()[0]
 
-            users = connection.execute("""
+            users = connection.execute(
+                """
                 SELECT COUNT(DISTINCT user_id)
                 FROM ai_requests
-                """).fetchone()[0]
+                """
+            ).fetchone()[0]
 
         return {
             "total": total,

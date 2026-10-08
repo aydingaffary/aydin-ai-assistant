@@ -1,3 +1,6 @@
+
+"""AI request logging service."""
+
 from datetime import datetime
 
 from database.db import get_connection
@@ -5,6 +8,8 @@ from database.db import get_connection
 
 class AIRequestService:
     """Track AI requests."""
+
+    MAX_CONTENT_LENGTH = 4000
 
     def log_request(
         self,
@@ -17,6 +22,18 @@ class AIRequestService:
         response_length: int = 0,
     ) -> None:
         """Save AI request log."""
+
+        if user_id <= 0:
+            return
+
+        if not isinstance(content, str):
+            return
+
+        content = content[: self.MAX_CONTENT_LENGTH]
+
+        prompt_length = max(0, int(prompt_length))
+        response_length = max(0, int(response_length))
+        response_time = max(0.0, float(response_time))
 
         with get_connection() as connection:
             connection.execute(

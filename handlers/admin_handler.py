@@ -11,7 +11,7 @@ from services.ai_security_service import AISecurityService
 from services.activity_service import ActivityService
 from services.ban_service import BanService
 from services.payment_service import PaymentService
-
+from database.db import get_connection
 
 ADMIN_ID = 111228726
 
@@ -126,10 +126,10 @@ async def admin_panel(
         "/ai_performance - عملکرد AI\n\n"
         "🤖 مانیتورینگ AI\n"
         "/ai_logs - آخرین درخواست‌های AI\n"
-        "/blocked_requests - درخواست‌های مسدود شده\n"
+        "/blocked - درخواست‌های مسدود شده\n"
         "/blocked_attempts - تلاش‌های مسدود شده\n\n"
         "🚫 مدیریت کاربران\n"
-        "/banned_users - کاربران مسدود شده\n"
+        "/banned - کاربران مسدود شده\n"
         "/ban_user USER_ID - مسدود کردن کاربر\n"
         "/unban_user USER_ID - رفع مسدودی\n\n"
         "💳 پرداخت\n"
@@ -292,6 +292,82 @@ async def premium_users(
     await update.message.reply_text(text)
 
 
+async def user_info(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE,
+):
+    """Show detailed information about a user."""
+
+    if not await check_admin(update):
+        return
+
+    if not context.args:
+        await update.message.reply_text(
+            "❌ شناسه کاربر را وارد کنید.\n\n"
+            "مثال:\n"
+            "/user 111228726"
+        )
+        return
+
+    try:
+        user_id = int(context.args[0])
+    except ValueError:
+        await update.message.reply_text(
+            "❌ شناسه کاربر باید عدد باشد."
+        )
+        return
+
+    if user_id <= 0:
+        await update.message.reply_text(
+            "❌ USER_ID نامعتبر است."
+        )
+        return
+
+    with get_connection() as connection:
+        user = connection.execute(
+            """
+            SELECT
+                user_id,
+                username,
+                is_premium,
+                premium_until,
+                created_at
+            FROM users
+            WHERE user_id = ?
+            """,
+            (user_id,),
+        ).fetchone()
+
+    if not user:
+        await update.message.reply_text(
+            "❌ کاربر پیدا نشد."
+        )
+        return
+
+    banned = ban_service.is_banned(user_id)
+
+    premium = "⭐ فعال" if user[2] else "🔒 غیرفعال"
+
+    if user[3]:
+        premium_until = user[3][:10]
+    else:
+        premium_until = "نامشخص"
+
+    ban_status = "🚫 مسدود" if banned else "✅ آزاد"
+
+    text = (
+        "👤 اطلاعات کاربر\n\n"
+        f"ID: {user[0]}\n"
+        f"Username: @{user[1] if user[1] else 'بدون نام'}\n\n"
+        f"⭐ Premium: {premium}\n"
+        f"📅 انقضا: {premium_until}\n"
+        f"🚫 وضعیت: {ban_status}\n"
+        f"📅 عضویت: {user[4][:10]}"
+    )
+
+    await update.message.reply_text(text)
+
+
 async def stats(
     update: Update,
     context: ContextTypes.DEFAULT_TYPE,
@@ -391,7 +467,7 @@ async def blocked_requests(
         return
 
     requests = get_ai_requests(
-        status="blocked",
+        status="banned",
         limit=10,
     )
 
@@ -413,6 +489,69 @@ async def blocked_requests(
         )
 
     await update.message.reply_text(text)
+
+async def monitor(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not await check_admin(update):
+        return
+
+    with get_connection() as connection:
+        users = connection.execute(
+            "SELECT COUNT(*) FROM users"
+        ).fetchone()[0]
+
+        premium = connection.execute(
+            "SELECT COUNT(*) FROM users WHERE is_premium = 1"
+        ).fetchone()[0]
+
+        total_requests = connection.execute(
+            "SELECT COUNT(*) FROM ai_requests"
+        ).fetchone()[0]
+
+        allowed = connection.execute(
+            "SELECT COUNT(*) FROM ai_requests WHERE status = ?",
+            ("allowed",),
+        ).fetchone()[0]
+
+        blocked = connection.execute(
+            "SELECT COUNT(*) FROM ai_requests WHERE status = ?",
+            ("blocked",),
+        ).fetchone()[0]
+
+        rate_limited = connection.execute(
+            "SELECT COUNT(*) FROM ai_requests WHERE status = ?",
+            ("rate_limited",),
+        ).fetchone()[0]
+
+        providers = connection.execute(
+            """
+            SELECT provider, COUNT(*)
+            FROM ai_requests
+            GROUP BY provider
+            ORDER BY COUNT(*) DESC
+            """
+        ).fetchall()
+
+    text = (
+        "📊 مانیتورینگ سیستم\n\n"
+        "👥 کاربران\n"
+        f"├─ کل کاربران: {users}\n"
+        f"└─ Premium فعال: {premium}\n\n"
+        "🤖 هوش مصنوعی\n"
+        f"├─ کل درخواست‌ها: {total_requests}\n"
+        f"├─ موفق: {allowed}\n"
+        f"├─ مسدود: {blocked}\n"
+        f"└─ Rate Limit: {rate_limited}\n\n"
+        "🔌 Providerها\n"
+    )
+
+    if providers:
+        for provider, count in providers:
+            text += f"├─ {provider}: {count} درخواست\n"
+    else:
+        text += "└─ هنوز داده‌ای ثبت نشده است.\n"
+
+    await update.message.reply_text(text)
+
 
 
 async def ai_stats(
@@ -502,6 +641,12 @@ async def ban_user(
         )
         return
 
+    if user_id <= 0:
+        await update.message.reply_text(
+            "❌ USER_ID نامعتبر است."
+        )
+        return
+
     ban_service.ban_user(
         user_id,
         "admin ban",
@@ -533,6 +678,12 @@ async def unban_user(
     except ValueError:
         await update.message.reply_text(
             "❌ USER_ID باید عدد باشد."
+        )
+        return
+
+    if user_id <= 0:
+        await update.message.reply_text(
+            "❌ USER_ID نامعتبر است."
         )
         return
 
@@ -658,6 +809,12 @@ async def approve_payment(
         )
         return
 
+    if payment_id <= 0:
+        await update.message.reply_text(
+            "❌ شماره پرداخت نامعتبر است."
+        )
+        return
+
     payment = payment_service.get_payment(payment_id)
 
     if not payment:
@@ -672,9 +829,7 @@ async def approve_payment(
         )
         return
 
-    success = payment_service.approve_payment(
-        payment_id
-    )
+    success = payment_service.approve_payment(payment_id)
 
     if not success:
         await update.message.reply_text(
@@ -684,14 +839,20 @@ async def approve_payment(
 
     user_id = payment[1]
 
-    await context.bot.send_message(
-        chat_id=user_id,
-        text=(
-            "🎉 تبریک!\n\n"
-            "⭐ اشتراک ویژه Aydin AI برای شما فعال شد.\n\n"
-            "✅ اکنون به امکانات Premium دسترسی دارید."
-        ),
-    )
+    try:
+        await context.bot.send_message(
+            chat_id=user_id,
+            text=(
+                "🎉 تبریک!\n\n"
+                "⭐ اشتراک ویژه Aydin AI برای شما فعال شد.\n\n"
+                "✅ اکنون به امکانات Premium دسترسی دارید."
+            ),
+        )
+    except Exception:
+        logging.exception(
+            "Failed to notify user %s after payment approval",
+            user_id,
+        )
 
     await update.message.reply_text(
         "✅ پرداخت تأیید شد.\n"

@@ -4,6 +4,7 @@ import logging
 from datetime import datetime
 from services.user_service import UserService
 from handlers.subscription_handler import handle_subscription
+from services.ai_service import AIService
 from services.activity_service import ActivityService
 from handlers.subscription_handler import (
     handle_subscription,
@@ -362,6 +363,24 @@ async def handle_message(
 
             return
 
+    # Free-form AI message
+    user_id = update.effective_user.id
+
+    ai_service = AIService()
+
+    response = ai_service.ask(
+        user_id=user_id,
+        prompt=text,
+    )
+
+    await update.message.reply_text(response)
+
+
+def register_handlers(application):
+
+    application.add_handler(
+        MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message)
+    )
 def register_handlers(application):
 
     application.add_handler(

@@ -1,3 +1,6 @@
+
+"""AI performance statistics service."""
+
 from database.db import get_connection
 
 
@@ -5,15 +8,19 @@ class AIStatsService:
     """AI performance statistics."""
 
     def get_stats(self):
+        """Return AI performance statistics."""
 
         with get_connection() as connection:
 
-            total = connection.execute("""
+            total = connection.execute(
+                """
                 SELECT COUNT(*)
                 FROM ai_requests
-                """).fetchone()[0]
+                """
+            ).fetchone()[0]
 
-            providers = connection.execute("""
+            providers = connection.execute(
+                """
                 SELECT
                     provider,
                     COUNT(*),
@@ -22,15 +29,20 @@ class AIStatsService:
                 FROM ai_requests
                 WHERE provider != 'unknown'
                 GROUP BY provider
-                """).fetchall()
+                ORDER BY COUNT(*) DESC
+                """
+            ).fetchall()
 
-            security = connection.execute("""
+            security = connection.execute(
+                """
                 SELECT
                     status,
                     COUNT(*)
                 FROM ai_requests
                 GROUP BY status
-                """).fetchall()
+                ORDER BY COUNT(*) DESC
+                """
+            ).fetchall()
 
         return {
             "total": total,

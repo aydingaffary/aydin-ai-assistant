@@ -18,10 +18,12 @@ from handlers.admin_handler import (
     blocked_requests,
     banned_users,
     premium_users,
+    user_info,
     stats,
     today_users,
     unban_user,
     users_list,
+    monitor,
     payments_list,
     approve_payment,
 )
@@ -61,19 +63,6 @@ async def cancel(update, context):
     )
 
 
-async def error_handler(update, context):
-    """Handle unexpected errors."""
-    del update
-
-    logging.getLogger(__name__).exception(
-        "Bot error",
-        exc_info=context.error,
-    )
-    """Handle unexpected errors."""
-    logging.getLogger(__name__).exception(
-        "Bot error",
-        exc_info=context.error,
-    )
 
 
 async def post_init(application):
@@ -98,6 +87,22 @@ async def post_shutdown(application):
         await football_scheduler.stop()
 
 
+async def error_handler(update, context):
+    """Handle unexpected bot errors."""
+
+    logging.error(
+        "Unhandled exception:",
+        exc_info=context.error,
+    )
+
+    if update and update.effective_message:
+        try:
+            await update.effective_message.reply_text(
+                "❌ خطایی در پردازش درخواست رخ داد. لطفاً دوباره تلاش کنید."
+            )
+        except Exception:
+            pass
+
 def main():
     """Start the Telegram bot."""
     setup_logging()
@@ -113,6 +118,7 @@ def main():
         .post_shutdown(post_shutdown)
         .build()
     )
+    application.add_error_handler(error_handler)
 
     if application.job_queue:
         application.job_queue.run_repeating(
@@ -199,6 +205,7 @@ def main():
         ("users", users_list),
         ("today", today_users),
         ("premium", premium_users),
+        ("user", user_info),
         ("stats", stats),
         ("banned", banned_users),
         ("ban_user", ban_user),
@@ -206,6 +213,7 @@ def main():
         ("ai_logs", ai_logs),
         ("blocked", blocked_requests),
         ("ai_stats", ai_stats),
+        ("monitor", monitor),
         ("ai_requests", ai_requests),
         ("blocked_attempts", blocked_attempts),
         ("ai_performance", ai_performance),
@@ -220,7 +228,7 @@ def main():
     register_handlers(application)
 
     # Error handling
-    application.add_error_handler(error_handler)
+
 
     logging.getLogger(__name__).info("Aydin AI Assistant is running...")
 

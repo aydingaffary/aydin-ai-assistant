@@ -18,6 +18,7 @@ class AIRouter:
     def __init__(self) -> None:
         self.providers = []
         self.last_provider = "unknown"
+
         for provider_class in [
             GroqProvider,
             GeminiProvider,
@@ -39,27 +40,31 @@ class AIRouter:
         for provider in self.providers:
             provider_name = provider.__class__.__name__
 
+            logger.info(
+                "Trying provider: %s",
+                provider_name,
+            )
+
+            self.last_provider = provider_name
+
+            executor = ThreadPoolExecutor(max_workers=1)
+
             try:
-                logger.info(
-                    "Trying provider: %s",
-                    provider_name,
+                future = executor.submit(
+                    provider.generate_response,
+                    prompt,
                 )
-                self.last_provider = provider_name
 
-                with ThreadPoolExecutor(max_workers=1) as executor:
-                    future = executor.submit(
-                        provider.generate_response,
-                        prompt,
-                    )
-
-                    response = future.result(
-                        timeout=self.TIMEOUT,
-                    )
+                response = future.result(
+                    timeout=self.TIMEOUT,
+                )
 
                 logger.info(
                     "Provider succeeded: %s",
                     provider_name,
                 )
+
+                executor.shutdown(wait=False)
 
                 return response
 
@@ -70,10 +75,15 @@ class AIRouter:
                     self.TIMEOUT,
                 )
 
+                executor.shutdown(wait=False)
+
             except Exception as error:
-                logger.exception(
-                    "%s failed",
+                logger.warning(
+                    "%s failed: %s",
                     provider_name,
+                    error,
                 )
+
+                executor.shutdown(wait=False)
 
         return "❌ هیچ سرویس هوش مصنوعی در دسترس نیست."
