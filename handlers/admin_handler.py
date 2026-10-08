@@ -1,33 +1,49 @@
+
 """Admin panel handlers."""
 
 from datetime import datetime
 
 from telegram import Update
 from telegram.ext import ContextTypes
-from services.payment_service import PaymentService
 
-payment_service = PaymentService()
 from database.db import get_connection
+from services.ai_security_service import AISecurityService
 from services.activity_service import ActivityService
 from services.ban_service import BanService
-from services.ai_security_service import AISecurityService
+from services.payment_service import PaymentService
 
+
+ADMIN_ID = 111228726
+
+payment_service = PaymentService()
 security_service = AISecurityService()
 ban_service = BanService()
-
 activity_service = ActivityService()
 
 
+def is_admin(user_id: int) -> bool:
+    """Return True if the user is an admin."""
+    return user_id == ADMIN_ID
+
+
+async def check_admin(update: Update) -> bool:
+    """Check admin access."""
+    if not update.effective_user or not is_admin(update.effective_user.id):
+        await update.message.reply_text("❌ دسترسی ندارید.")
+        return False
+
+    return True
+
+
 def get_ai_requests(
-    status=None,
-    limit=20,
+    status: str | None = None,
+    limit: int = 20,
 ):
     """Get AI request logs."""
 
     with get_connection() as connection:
 
         if status:
-
             return connection.execute(
                 """
                 SELECT
@@ -36,7 +52,7 @@ def get_ai_requests(
                     status,
                     created_at
                 FROM ai_requests
-                WHERE status=?
+                WHERE status = ?
                 ORDER BY id DESC
                 LIMIT ?
                 """,
@@ -61,31 +77,13 @@ def get_ai_requests(
         ).fetchall()
 
 
-ADMIN_ID = 111228726
-
-
-def is_admin(user_id: int) -> bool:
-    return user_id == ADMIN_ID
-
-
-async def check_admin(update: Update) -> bool:
-
-    if not is_admin(update.effective_user.id):
-
-        await update.message.reply_text("❌ دسترسی ندارید.")
-
-        return False
-
-    return True
-
 def get_payments(
-    status="pending",
-    limit=20,
+    status: str = "pending",
+    limit: int = 20,
 ):
     """Get payment requests."""
 
     with get_connection() as connection:
-
         return connection.execute(
             """
             SELECT
@@ -96,7 +94,7 @@ def get_payments(
                 status,
                 created_at
             FROM payments
-            WHERE status=?
+            WHERE status = ?
             ORDER BY id DESC
             LIMIT ?
             """,
@@ -111,18 +109,32 @@ async def admin_panel(
     update: Update,
     context: ContextTypes.DEFAULT_TYPE,
 ):
-    """Main admin panel."""
+    """Show the main admin panel."""
 
     if not await check_admin(update):
         return
 
     await update.message.reply_text(
         "🤖 پنل مدیریت Aydin AI\n\n"
-        "دستورات:\n\n"
-        "/users - لیست کاربران\n"
+        "👥 کاربران\n"
+        "/users - کاربران اخیر\n"
         "/today - کاربران فعال امروز\n"
-        "/premium - کاربران اشتراکی\n"
-        "/stats - گزارش کامل ربات"
+        "/premium - کاربران Premium\n\n"
+        "📊 آمار\n"
+        "/stats - گزارش کامل ربات\n"
+        "/ai_stats - آمار هوش مصنوعی\n"
+        "/ai_performance - عملکرد AI\n\n"
+        "🤖 مانیتورینگ AI\n"
+        "/ai_logs - آخرین درخواست‌های AI\n"
+        "/blocked_requests - درخواست‌های مسدود شده\n"
+        "/blocked_attempts - تلاش‌های مسدود شده\n\n"
+        "🚫 مدیریت کاربران\n"
+        "/banned_users - کاربران مسدود شده\n"
+        "/ban_user USER_ID - مسدود کردن کاربر\n"
+        "/unban_user USER_ID - رفع مسدودی\n\n"
+        "💳 پرداخت\n"
+        "/payments - پرداخت‌های در انتظار\n"
+        "/approve PAYMENT_ID - تأیید پرداخت"
     )
 
 
@@ -130,23 +142,27 @@ async def users_list(
     update: Update,
     context: ContextTypes.DEFAULT_TYPE,
 ):
+    """Show recent users."""
 
     if not await check_admin(update):
         return
 
     with get_connection() as connection:
-
-        users = connection.execute("""
-            SELECT user_id, username, is_premium, created_at
+        users = connection.execute(
+            """
+            SELECT
+                user_id,
+                username,
+                is_premium,
+                created_at
             FROM users
             ORDER BY created_at DESC
             LIMIT 20
-            """).fetchall()
+            """
+        ).fetchall()
 
     if not users:
-
         await update.message.reply_text("👥 کاربری وجود ندارد.")
-
         return
 
     text = "👥 کاربران اخیر:\n\n"
@@ -156,8 +172,7 @@ async def users_list(
         premium = "⭐ Premium" if user[2] else "رایگان"
 
         text += (
-            f"{index}. "
-            f"{user[1] or 'بدون نام'}\n"
+            f"{index}. {user[1] or 'بدون نام'}\n"
             f"ID: {user[0]}\n"
             f"نوع: {premium}\n"
             f"ثبت نام: {user[3][:10]}\n\n"
@@ -170,6 +185,7 @@ async def today_users(
     update: Update,
     context: ContextTypes.DEFAULT_TYPE,
 ):
+    """Show users active today."""
 
     if not await check_admin(update):
         return
@@ -177,15 +193,16 @@ async def today_users(
     today = datetime.now().date().isoformat()
 
     with get_connection() as connection:
-
         users = connection.execute(
             """
-            SELECT DISTINCT u.username,
-                            a.user_id
+            SELECT DISTINCT
+                u.username,
+                a.user_id
             FROM user_activity a
             JOIN users u
-            ON u.user_id=a.user_id
-            WHERE DATE(a.created_at)=?
+                ON u.user_id = a.user_id
+            WHERE DATE(a.created_at) = ?
+            ORDER BY a.user_id
             """,
             (today,),
         ).fetchall()
@@ -193,150 +210,16 @@ async def today_users(
     text = "🔥 کاربران فعال امروز:\n\n"
 
     if not users:
-
         text += "امروز فعالیتی ثبت نشده."
 
     else:
-
         for index, user in enumerate(users, 1):
-
-            text += f"{index}. " f"{user[0] or 'بدون نام'}\n" f"ID: {user[1]}\n\n"
-
-    await update.message.reply_text(text)
-
-
-async def premium_users(
-    update: Update,
-    context: ContextTypes.DEFAULT_TYPE,
-):
-
-    if not await check_admin(update):
-        return
-
-    with get_connection() as connection:
-
-        users = connection.execute("""
-            SELECT username, user_id
-            FROM users
-            WHERE is_premium=1
-            """).fetchall()
-
-    text = "⭐ کاربران Premium:\n\n"
-
-    if not users:
-
-        text += "هنوز کاربر Premium وجود ندارد."
-
-    else:
-
-        for index, user in enumerate(users, 1):
-
-            text += f"{index}. " f"{user[0] or 'بدون نام'}\n" f"ID: {user[1]}\n\n"
-
-    await update.message.reply_text(text)
-
-
-async def stats(
-    update: Update,
-    context: ContextTypes.DEFAULT_TYPE,
-):
-
-    if not await check_admin(update):
-        return
-
-    with get_connection() as connection:
-
-        users = connection.execute("SELECT COUNT(*) FROM users").fetchone()[0]
-
-        messages = connection.execute("SELECT COUNT(*) FROM messages").fetchone()[0]
-
-        premium = connection.execute("""
-            SELECT COUNT(*)
-            FROM users
-            WHERE is_premium=1
-            """).fetchone()[0]
-
-        activities = connection.execute("""
-            SELECT feature, COUNT(*)
-            FROM user_activity
-            GROUP BY feature
-            ORDER BY COUNT(*) DESC
-            """).fetchall()
-
-    text = (
-        "📊 گزارش کامل ربات\n\n"
-        f"👥 کاربران: {users}\n"
-        f"💬 پیام‌ها: {messages}\n"
-        f"⭐ Premium: {premium}\n\n"
-        "🔥 استفاده از بخش‌ها:\n\n"
-    )
-
-    for item in activities:
-
-        text += f"• {item[0]} : {item[1]}\n"
-
-    await update.message.reply_text(text)
-
-
-async def ai_logs(
-    update: Update,
-    context: ContextTypes.DEFAULT_TYPE,
-):
-
-    if not await check_admin(update):
-        return
-
-    requests = get_ai_requests()
-
-    text = "🤖 آخرین درخواست‌های AI:\n\n"
-
-    if not requests:
-        text += "درخواستی ثبت نشده."
-
-    else:
-
-        for index, item in enumerate(requests, 1):
-
             text += (
-                f"{index})\n"
-                f"👤 ID: {item[0]}\n"
-                f"📝 {item[1]}\n"
-                f"📌 وضعیت: {item[2]}\n"
-                f"🕒 {item[3][:19]}\n\n"
+                f"{index}. {user[0] or 'بدون نام'}\n"
+                f"ID: {user[1]}\n\n"
             )
 
     await update.message.reply_text(text)
-
-
-async def blocked_requests(
-    update: Update,
-    context: ContextTypes.DEFAULT_TYPE,
-):
-
-    if not await check_admin(update):
-        return
-
-    requests = get_ai_requests(status="blocked")
-
-    text = "🚫 درخواست‌های مسدود شده:\n\n"
-
-    if not requests:
-        text += "موردی وجود ندارد."
-
-    else:
-
-        for index, item in enumerate(requests, 1):
-
-            text += (
-                f"{index})\n"
-                f"👤 ID: {item[0]}\n"
-                f"📝 {item[1]}\n"
-                f"🕒 {item[3][:19]}\n\n"
-            )
-
-    await update.message.reply_text(text)
-
-
 async def ai_requests(
     update: Update,
     context: ContextTypes.DEFAULT_TYPE,
@@ -345,12 +228,14 @@ async def ai_requests(
         return
 
     with get_connection() as connection:
-        requests = connection.execute("""
+        requests = connection.execute(
+            """
             SELECT user_id, content, status, created_at
             FROM ai_requests
             ORDER BY id DESC
             LIMIT 10
-            """).fetchall()
+            """
+        ).fetchall()
 
     text = "🤖 آخرین درخواست‌های AI:\n\n"
 
@@ -366,45 +251,98 @@ async def ai_requests(
     await update.message.reply_text(text)
 
 
-async def ai_stats(
+async def premium_users(
     update: Update,
     context: ContextTypes.DEFAULT_TYPE,
 ):
+    """Show premium users."""
+
+    if not await check_admin(update):
+        return
+
+    with get_connection() as connection:
+        users = connection.execute(
+            """
+            SELECT
+                username,
+                user_id,
+                premium_until
+            FROM users
+            WHERE is_premium = 1
+            ORDER BY premium_until DESC
+            """
+        ).fetchall()
+
+    text = "⭐ کاربران Premium:\n\n"
+
+    if not users:
+        text += "هنوز کاربر Premium وجود ندارد."
+
+    else:
+        for index, user in enumerate(users, 1):
+
+            expiry = user[2][:10] if user[2] else "نامشخص"
+
+            text += (
+                f"{index}. {user[0] or 'بدون نام'}\n"
+                f"ID: {user[1]}\n"
+                f"انقضا: {expiry}\n\n"
+            )
+
+    await update.message.reply_text(text)
+
+
+async def stats(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE,
+):
+    """Show general bot statistics."""
 
     if not await check_admin(update):
         return
 
     with get_connection() as connection:
 
-        total = connection.execute("""
-            SELECT COUNT(*)
-            FROM ai_requests
-            """).fetchone()[0]
+        users = connection.execute(
+            "SELECT COUNT(*) FROM users"
+        ).fetchone()[0]
 
-        allowed = connection.execute("""
-            SELECT COUNT(*)
-            FROM ai_requests
-            WHERE status='allowed'
-            """).fetchone()[0]
+        messages = connection.execute(
+            "SELECT COUNT(*) FROM messages"
+        ).fetchone()[0]
 
-        blocked = connection.execute("""
+        premium = connection.execute(
+            """
             SELECT COUNT(*)
-            FROM ai_requests
-            WHERE status='blocked'
-            """).fetchone()[0]
+            FROM users
+            WHERE is_premium = 1
+            """
+        ).fetchone()[0]
 
-        users = connection.execute("""
-            SELECT COUNT(DISTINCT user_id)
-            FROM ai_requests
-            """).fetchone()[0]
+        activities = connection.execute(
+            """
+            SELECT
+                feature,
+                COUNT(*)
+            FROM user_activity
+            GROUP BY feature
+            ORDER BY COUNT(*) DESC
+            """
+        ).fetchall()
 
     text = (
-        "🧠 گزارش AI\n\n"
-        f"📌 کل درخواست‌ها: {total}\n"
-        f"✅ مجاز: {allowed}\n"
-        f"🚫 مسدود: {blocked}\n"
-        f"👥 کاربران AI: {users}"
+        "📊 گزارش کامل ربات\n\n"
+        f"👥 کاربران: {users}\n"
+        f"💬 پیام‌ها: {messages}\n"
+        f"⭐ Premium: {premium}\n\n"
+        "🔥 استفاده از بخش‌ها:\n\n"
     )
+
+    if activities:
+        for item in activities:
+            text += f"• {item[0]} : {item[1]}\n"
+    else:
+        text += "هنوز فعالیتی ثبت نشده."
 
     await update.message.reply_text(text)
 
@@ -418,31 +356,24 @@ async def ai_logs(
     if not await check_admin(update):
         return
 
-    with get_connection() as connection:
-
-        requests = connection.execute("""
-            SELECT
-                user_id,
-                content,
-                status,
-                created_at
-            FROM ai_requests
-            ORDER BY id DESC
-            LIMIT 10
-            """).fetchall()
+    requests = get_ai_requests(limit=10)
 
     if not requests:
-        await update.message.reply_text("🤖 هنوز درخواست AI ثبت نشده.")
+        await update.message.reply_text(
+            "🤖 هنوز درخواست AI ثبت نشده."
+        )
         return
 
     text = "🤖 آخرین درخواست‌های AI:\n\n"
 
     for index, item in enumerate(requests, 1):
 
+        content = item[1][:50]
+
         text += (
             f"{index})\n"
             f"👤 ID: {item[0]}\n"
-            f"📝 {item[1][:50]}\n"
+            f"📝 {content}\n"
             f"📌 وضعیت: {item[2]}\n"
             f"🕒 {item[3][:19]}\n\n"
         )
@@ -459,23 +390,15 @@ async def blocked_requests(
     if not await check_admin(update):
         return
 
-    with get_connection() as connection:
-
-        requests = connection.execute("""
-            SELECT
-                user_id,
-                content,
-                created_at
-            FROM ai_requests
-            WHERE status='blocked'
-            ORDER BY id DESC
-            LIMIT 10
-            """).fetchall()
+    requests = get_ai_requests(
+        status="blocked",
+        limit=10,
+    )
 
     if not requests:
-
-        await update.message.reply_text("✅ درخواست بلاک شده‌ای وجود ندارد.")
-
+        await update.message.reply_text(
+            "✅ درخواست بلاک شده‌ای وجود ندارد."
+        )
         return
 
     text = "🚫 درخواست‌های بلاک شده:\n\n"
@@ -484,9 +407,9 @@ async def blocked_requests(
 
         text += (
             f"{index})\n"
-            f"👤 {item[0]}\n"
+            f"👤 ID: {item[0]}\n"
             f"📝 {item[1][:50]}\n"
-            f"🕒 {item[2][:19]}\n\n"
+            f"🕒 {item[3][:19]}\n\n"
         )
 
     await update.message.reply_text(text)
@@ -496,74 +419,135 @@ async def ai_stats(
     update: Update,
     context: ContextTypes.DEFAULT_TYPE,
 ):
-    """AI usage statistics."""
+    """Show AI security statistics."""
 
     if not await check_admin(update):
         return
 
-    with get_connection() as connection:
+    stats_data = security_service.get_stats()
 
-        total = connection.execute("""
-            SELECT COUNT(*)
-            FROM ai_requests
-            """).fetchone()[0]
+    text = (
+        "📊 آمار هوش مصنوعی\n\n"
+        f"👥 کاربران AI: {stats_data['users']}\n"
+        f"💬 کل درخواست‌ها: {stats_data['total']}\n\n"
+        f"✅ مجاز: {stats_data['allowed']}\n"
+        f"🚫 بن شده: {stats_data['banned']}\n"
+        f"⚠️ محدود شده: {stats_data['rate_limited']}"
+    )
 
-        allowed = connection.execute("""
-            SELECT COUNT(*)
-            FROM ai_requests
-            WHERE status='allowed'
-            """).fetchone()[0]
+    await update.message.reply_text(text)
 
-        blocked = connection.execute("""
-            SELECT COUNT(*)
-            FROM ai_requests
-            WHERE status='blocked'
-            """).fetchone()[0]
+
+async def ai_performance(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE,
+):
+    """Show AI performance statistics."""
+
+    if not await check_admin(update):
+        return
+
+    from services.ai_stats_service import AIStatsService
+
+    stats_data = AIStatsService().get_stats()
+
+    text = (
+        "📊 عملکرد هوش مصنوعی\n\n"
+        f"💬 کل درخواست‌ها: {stats_data['total']}\n\n"
+    )
+
+    for provider in stats_data["providers"]:
+
+        name = provider[0]
+        count = provider[1]
+        avg_time = provider[2]
+        avg_length = provider[3]
+
+        text += (
+            f"🤖 {name}\n"
+            f"تعداد: {count}\n"
+            f"⏱ میانگین زمان: {avg_time:.2f}s\n"
+            f"📝 میانگین پاسخ: {avg_length:.0f} کاراکتر\n\n"
+        )
+
+    text += "🛡 امنیت:\n\n"
+
+    for item in stats_data["security"]:
+        text += f"• {item[0]} : {item[1]}\n"
+
+    await update.message.reply_text(text)
+
+
+async def ban_user(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE,
+):
+    """Ban a user."""
+
+    if not await check_admin(update):
+        return
+
+    if not context.args:
+        await update.message.reply_text(
+            "استفاده:\n"
+            "/ban_user USER_ID"
+        )
+        return
+
+    try:
+        user_id = int(context.args[0])
+    except ValueError:
+        await update.message.reply_text(
+            "❌ USER_ID باید عدد باشد."
+        )
+        return
+
+    ban_service.ban_user(
+        user_id,
+        "admin ban",
+    )
 
     await update.message.reply_text(
-        "📊 آمار AI\n\n"
-        f"کل درخواست‌ها: {total}\n"
-        f"✅ مجاز: {allowed}\n"
-        f"🚫 بلاک شده: {blocked}"
+        f"🚫 کاربر {user_id} مسدود شد."
     )
 
 
-async def ban_user(update, context):
+async def unban_user(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE,
+):
+    """Unban a user."""
 
     if not await check_admin(update):
         return
 
     if not context.args:
-        await update.message.reply_text("استفاده:\n/ban_user USER_ID")
+        await update.message.reply_text(
+            "استفاده:\n"
+            "/unban_user USER_ID"
+        )
         return
 
-    user_id = int(context.args[0])
-
-    ban_service.ban_user(user_id, "admin ban")
-
-    await update.message.reply_text(f"🚫 کاربر {user_id} مسدود شد.")
-
-
-async def unban_user(update, context):
-
-    if not await check_admin(update):
+    try:
+        user_id = int(context.args[0])
+    except ValueError:
+        await update.message.reply_text(
+            "❌ USER_ID باید عدد باشد."
+        )
         return
-
-    if not context.args:
-        await update.message.reply_text("استفاده:\n/unban_user USER_ID")
-        return
-
-    user_id = int(context.args[0])
 
     ban_service.unban_user(user_id)
 
-    await update.message.reply_text(f"✅ کاربر {user_id} آزاد شد.")
+    await update.message.reply_text(
+        f"✅ کاربر {user_id} آزاد شد."
+    )
 
 
 async def banned_users(
     update: Update,
     context: ContextTypes.DEFAULT_TYPE,
 ):
+    """Show banned users."""
 
     if not await check_admin(update):
         return
@@ -576,8 +560,11 @@ async def banned_users(
         text += "لیست خالی است."
 
     else:
-        for i, user in enumerate(users, 1):
-            text += f"{i}. ID: {user[0]}\n" f"زمان: {user[1]}\n\n"
+        for index, user in enumerate(users, 1):
+            text += (
+                f"{index}. ID: {user[0]}\n"
+                f"زمان: {user[1]}\n\n"
+            )
 
     await update.message.reply_text(text)
 
@@ -586,6 +573,7 @@ async def blocked_attempts(
     update: Update,
     context: ContextTypes.DEFAULT_TYPE,
 ):
+    """Show blocked security attempts."""
 
     if not await check_admin(update):
         return
@@ -593,7 +581,9 @@ async def blocked_attempts(
     requests = security_service.get_blocked_attempts()
 
     if not requests:
-        await update.message.reply_text("✅ تلاش مسدود شده‌ای وجود ندارد.")
+        await update.message.reply_text(
+            "✅ تلاش مسدود شده‌ای وجود ندارد."
+        )
         return
 
     text = "🚨 تلاش‌های کاربران مسدود شده:\n\n"
@@ -609,64 +599,6 @@ async def blocked_attempts(
 
     await update.message.reply_text(text)
 
-
-async def ai_stats(
-    update: Update,
-    context: ContextTypes.DEFAULT_TYPE,
-):
-
-    if not await check_admin(update):
-        return
-
-    stats = security_service.get_stats()
-
-    text = (
-        "📊 آمار هوش مصنوعی\n\n"
-        f"👥 کاربران AI: {stats['users']}\n"
-        f"💬 کل درخواست‌ها: {stats['total']}\n\n"
-        f"✅ مجاز: {stats['allowed']}\n"
-        f"🚫 بن شده: {stats['banned']}\n"
-        f"⚠️ محدود شده: {stats['rate_limited']}"
-    )
-
-    await update.message.reply_text(text)
-
-
-async def ai_performance(
-    update: Update,
-    context: ContextTypes.DEFAULT_TYPE,
-):
-
-    if not await check_admin(update):
-        return
-
-    from services.ai_stats_service import AIStatsService
-
-    stats = AIStatsService().get_stats()
-
-    text = "📊 عملکرد هوش مصنوعی\n\n" f"💬 کل درخواست‌ها: {stats['total']}\n\n"
-
-    for provider in stats["providers"]:
-
-        name = provider[0]
-        count = provider[1]
-        avg_time = provider[2]
-        avg_length = provider[3]
-
-        text += (
-            f"🤖 {name}\n"
-            f"تعداد: {count}\n"
-            f"⏱ میانگین زمان: {avg_time:.2f}s\n"
-            f"📝 میانگین پاسخ: {avg_length:.0f} کاراکتر\n\n"
-        )
-
-        text += "🛡 امنیت:\n\n"
-
-        for item in stats["security"]:
-
-            text += f"• {item[0]} : {item[1]}\n"
-
-    await update.message.reply_text(text)
 
 async def payments_list(
     update: Update,
@@ -705,38 +637,39 @@ async def approve_payment(
     update: Update,
     context: ContextTypes.DEFAULT_TYPE,
 ):
-    """Approve payment."""
+    """Approve a payment and notify the user."""
 
     if not await check_admin(update):
         return
 
     if not context.args:
-
         await update.message.reply_text(
             "❌ شماره پرداخت را وارد کنید.\n\n"
             "مثال:\n"
             "/approve 2"
         )
-
         return
 
-    payment_id = int(context.args[0])
+    try:
+        payment_id = int(context.args[0])
+    except ValueError:
+        await update.message.reply_text(
+            "❌ شماره پرداخت باید عدد باشد."
+        )
+        return
 
     payment = payment_service.get_payment(payment_id)
 
     if not payment:
-
         await update.message.reply_text(
             "❌ پرداخت پیدا نشد."
         )
-
         return
-    if payment[4] == "paid":
 
+    if payment[4] == "paid":
         await update.message.reply_text(
             "⚠️ این پرداخت قبلاً تأیید شده است."
         )
-
         return
 
     success = payment_service.approve_payment(
@@ -744,11 +677,9 @@ async def approve_payment(
     )
 
     if not success:
-
         await update.message.reply_text(
             "❌ پرداخت تأیید نشد."
         )
-
         return
 
     user_id = payment[1]
