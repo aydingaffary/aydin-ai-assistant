@@ -9,3 +9,6 @@ data/challenge_users.json
 
 data/users.json
 data/user_activity.json
+
+# Runtime logs
+logs/
