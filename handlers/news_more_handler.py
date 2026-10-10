@@ -1,50 +1,82 @@
+
 """News more handler."""
 
 from telegram import Update
+from telegram.constants import ParseMode
 from telegram.ext import ContextTypes
 
+from handlers.news_handler import build_news_message, news_keyboard
+from services.chat_state import get_member_state
 from services.news_service import NewsService
-from services.subscription_service import SubscriptionService
 
 news_service = NewsService()
-subscription_service = SubscriptionService()
 
 
 async def handle_news_more(
     update: Update,
     context: ContextTypes.DEFAULT_TYPE,
 ) -> None:
-    """Handle more news requests."""
+    """Show the next page of news for the requesting member."""
 
     query = update.callback_query
+    if query is None:
+        return
+
+    chat = update.effective_chat
+    user = update.effective_user
+
+    is_group = (
+        chat is not None
+        and chat.type in ("group", "supergroup")
+    )
+
+    # Group buttons belong to the member who requested the news.
+    if is_group:
+        expected_data = f"news_more_{user.id}" if user else ""
+        if query.data != expected_data:
+            await query.answer(
+                "این دکمه متعلق به عضو دیگری است؛ از منوی اخبار خودت استفاده کن.",
+                show_alert=True,
+            )
+            return
 
     await query.answer()
 
-    user_id = query.from_user.id
+    state = get_member_state(update, context)
+    topic = state.get("last_news_topic", "")
+    offset = state.get("news_offset", 3)
 
-    if not subscription_service.has_access(user_id):
-        await query.edit_message_text(
-            "🔒 برای مشاهده اخبار بیشتر نیاز به اشتراک دارید."
+    news = news_service.get_news(topic, limit=3, offset=offset)
+
+    if not news:
+        await query.answer(
+            "خبر بیشتری پیدا نشد.",
+            show_alert=True,
         )
         return
 
-    topic = context.user_data.get(
-        "last_news_topic",
-        "",
-    )
+    response = build_news_message(news, start=offset + 1)
+    displayed_count = response.count("<a href=")
 
-    news = news_service.get_news(
-        topic,
-        limit=10,
-    )
-
-    response = "📰 اخبار بیشتر:\n\n"
-
-    for index, item in enumerate(news, start=1):
-        response += (
-            f"{index}. {item['title']}\n"
-            f"🌐 {item['source']}\n"
-            f"🔗 {item['link']}\n\n"
+    if displayed_count == 0:
+        await query.answer(
+            "خبر قابل نمایش دیگری پیدا نشد.",
+            show_alert=True,
         )
+        return
 
-    await query.edit_message_text(response)
+    next_offset = offset + displayed_count
+    owner_id = user.id if is_group and user else None
+
+    try:
+        await query.edit_message_text(
+            response,
+            parse_mode=ParseMode.HTML,
+            reply_markup=news_keyboard(owner_id),
+            disable_web_page_preview=True,
+        )
+    except Exception as exc:
+        if "Message is not modified" not in str(exc):
+            raise
+
+    state["news_offset"] = next_offset
