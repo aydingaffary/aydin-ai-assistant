@@ -101,7 +101,153 @@ async def handle_message(
 
     logger.info("Router received: %s", text)
 
+ 
     # ============================================================
+    # GROUP ROUTING — NO AI ASSISTANT
+    chat = update.effective_chat
+
+    if chat and chat.type in ("group", "supergroup"):
+        from services.chat_state import get_member_state
+
+        state = get_member_state(update, context)
+
+        # Main-menu commands must be handled before pending input states.
+        if text in {"↩️ منوی اصلی", "منوی اصلی"}:
+            state.clear()
+            keyboard = [
+                ["💵 ارز و طلا", "📰 اخبار"],
+                ["⛅ آب‌وهوا", "⚽ نتایج فوتبال"],
+                ["🎬 فیلم و سریال", "🔎 جستجوی فیلم"],
+                ["🎬 اکران‌های پیش رو", "📺 سریال‌های پیش رو"],
+                ["🍳 آشپزی", "🧩 چالش روزانه"],
+                ["👨‍💻 ارتباط با توسعه‌دهنده"],
+            ]
+            await update.message.reply_text(
+                "🏠 منوی اصلی ربات\n\nیک گزینه را انتخاب کنید:",
+                reply_markup=ReplyKeyboardMarkup(
+                    keyboard,
+                    resize_keyboard=True,
+                ),
+            )
+            return
+
+        market_buttons = {
+            "💵 ارز و طلا", "دلار", "قیمت دلار", "قیمت ارز",
+            "طلا", "قیمت طلا",
+        }
+        news_buttons = {
+            "📰 اخبار", "اخبار", "خبرها", "آخرین اخبار", "اخبار روز",
+        }
+        weather_buttons = {
+            "⛅ آب‌وهوا", "⛅️ آب‌وهوا", "آب‌وهوا", "آب و هوا",
+            "هوا", "وضعیت هوا",
+        }
+        movie_search_buttons = {"🔎 جستجوی فیلم", "جستجوی فیلم"}
+        upcoming_movie_buttons = {"🎬 اکران‌های پیش رو", "اکران‌های پیش رو"}
+        upcoming_tv_buttons = {"📺 سریال‌های پیش رو", "سریال‌های پیش رو"}
+        cooking_buttons = {"🍳 آشپزی", "آشپزی"}
+        football_buttons = {"⚽ نتایج فوتبال", "فوتبال"}
+        challenge_buttons = {
+            "🧩 چالش روزانه", "چالش روزانه", "چالش", "🧩 چالش",
+        }
+        developer_buttons = {
+            "👨‍💻 ارتباط با توسعه‌دهنده", "ارتباط با توسعه‌دهنده",
+        }
+
+        # A new feature selection cancels this member's previous pending input.
+        # Keep all feature-button checks above weather/movie follow-up checks.
+        if text in market_buttons:
+            state.clear()
+            from handlers.market_handler import handle_market
+            await handle_market(update, context)
+            return
+
+        if text in news_buttons:
+            state.clear()
+            from handlers.news_handler import handle_news
+            await handle_news(update, context)
+            return
+
+        if text in weather_buttons:
+            state.clear()
+            state["mode"] = "weather"
+            await update.message.reply_text(
+                "⛅ نام شهر را وارد کنید؛ مثلاً تبریز یا تهران."
+            )
+            return
+
+        if text in upcoming_movie_buttons:
+            state.clear()
+            from handlers.upcoming_handler import handle_upcoming
+            await handle_upcoming(update, context)
+            return
+
+        if text in upcoming_tv_buttons:
+            state.clear()
+            from handlers.tv_upcoming_handler import handle_tv_upcoming
+            await handle_tv_upcoming(update, context)
+            return
+
+        if text in movie_search_buttons:
+            state.clear()
+            state["waiting_movie"] = True
+            await update.message.reply_text(
+                "🎬 نام فیلم یا سریال را وارد کنید."
+            )
+            return
+
+        if text in cooking_buttons:
+            state.clear()
+            from handlers.cooking_handler import cooking
+            await cooking(update, context)
+            return
+
+        if text in football_buttons:
+            state.clear()
+            from handlers.football_handler import handle_football
+            await handle_football(update, context)
+            return
+
+        if text in challenge_buttons:
+            state.clear()
+            state["mode"] = "challenge"
+            from handlers.challenge_handler import challenge_menu
+            await challenge_menu(update, context)
+            return
+
+        if text in developer_buttons:
+            state.clear()
+            await update.message.reply_text(
+                "👨‍💻 ارتباط با توسعه‌دهنده:\n"
+                "https://t.me/Aydingaffary"
+            )
+            return
+
+        if state.get("mode") == "challenge":
+            if text == "🧩 شروع چالش":
+                from handlers.challenge_handler import handle_challenge
+                await handle_challenge(update, context)
+                return
+            if text == "🏆 رتبه من":
+                from handlers.challenge_handler import show_rank
+                await show_rank(update, context)
+                return
+
+        # Pending inputs are checked only after new feature buttons.
+        if state.get("mode") == "weather":
+            from handlers.weather_handler import handle_weather
+            await handle_weather(update, context)
+            return
+
+        if state.get("waiting_movie"):
+            state.pop("waiting_movie", None)
+            from handlers.imdb_handler import handle_movie_search
+            await handle_movie_search(update, context)
+            return
+
+        # Never use the AI fallback for unrecognized group messages.
+        return
+
     # 1. GLOBAL RETURN TO MAIN MENU
     # ============================================================
 

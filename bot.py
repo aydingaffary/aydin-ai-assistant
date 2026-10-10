@@ -136,7 +136,7 @@ def main():
     application.add_handler(
         CallbackQueryHandler(
             next_challenge,
-            pattern="^next_challenge$",
+            pattern="^next_challenge(?:_[0-9]+)?$",
         )
     )
     application.add_handler(
@@ -150,7 +150,7 @@ def main():
     application.add_handler(
         CallbackQueryHandler(
             next_recipe,
-            pattern="^next_recipe$",
+            pattern="^next_recipe(?:_[0-9]+)?$",
         )
     )
 
@@ -158,7 +158,7 @@ def main():
     application.add_handler(
         CallbackQueryHandler(
             handle_news_more,
-            pattern="^news_more$",
+            pattern="^news_more(?:_[0-9]+)?$",
         )
     )
 
